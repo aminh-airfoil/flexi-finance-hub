@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,24 @@ interface Props {
 export function TransactionDialog({ open, onOpenChange, transaction }: Props) {
   const { addTransaction, updateTransaction, categories, accounts } = useApp();
   const [form, setForm] = useState({ desc: "", amount: "", date: "", cat: "", acc: "1", note: "" });
+
+  const mainCategories = useMemo(
+    () => categories.filter(c => !c.parentId),
+    [categories],
+  );
+
+  const subCategoriesByParent = useMemo(
+    () => {
+      const map: Record<number, typeof categories> = {};
+      categories.forEach(c => {
+        if (c.parentId == null) return;
+        if (!map[c.parentId]) map[c.parentId] = [];
+        map[c.parentId].push(c);
+      });
+      return map;
+    },
+    [categories],
+  );
 
   useEffect(() => {
     if (transaction) {
@@ -73,9 +91,31 @@ export function TransactionDialog({ open, onOpenChange, transaction }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Category</Label>
-              <select value={form.cat} onChange={e => setForm(f => ({ ...f, cat: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground">
+              <select
+                value={form.cat}
+                onChange={e => setForm(f => ({ ...f, cat: e.target.value }))}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"
+              >
                 <option value="">Income (none)</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {mainCategories.map(main => {
+                  const subs = subCategoriesByParent[main.id] || [];
+                  if (!subs.length) {
+                    return (
+                      <option key={main.id} value={main.id}>
+                        {main.name}
+                      </option>
+                    );
+                  }
+                  return (
+                    <optgroup key={main.id} label={main.name}>
+                      {subs.map(sub => (
+                        <option key={sub.id} value={sub.id}>
+                          {`${main.name} · ${sub.name}`}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })}
               </select>
             </div>
             <div>

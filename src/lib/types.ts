@@ -5,6 +5,11 @@ export type Currency = "USD" | "MYR";
 export interface Category {
   id: number;
   name: string;
+  /**
+   * If null/undefined → main category.
+   * If set         → subcategory of the category with this id.
+   */
+  parentId?: number | null;
   icon: LucideIcon;
   color: string;
   budget: number;

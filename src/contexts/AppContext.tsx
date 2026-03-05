@@ -18,6 +18,10 @@ interface AppContextType {
   updateCategory: (c: Category) => void;
   deleteCategory: (id: number) => void;
 
+  // Category helpers
+  getMainCategories: () => Category[];
+  getSubCategories: (parentId: number) => Category[];
+
   accounts: Account[];
   addAccount: (a: Omit<Account, "id">) => void;
   updateAccount: (a: Account) => void;
@@ -56,13 +60,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const getCat = useCallback((id: number | null) => id ? categories.find(c => c.id === id) : undefined, [categories]);
   const getAcc = useCallback((id: number) => accounts.find(a => a.id === id), [accounts]);
 
+  const getMainCategories = useCallback(
+    () => categories.filter(c => !c.parentId),
+    [categories],
+  );
+
+  const getSubCategories = useCallback(
+    (parentId: number) => categories.filter(c => c.parentId === parentId),
+    [categories],
+  );
+
   const addTransaction = (t: Omit<Transaction, "id">) => setTransactions(prev => [{ ...t, id: ++nextId }, ...prev]);
   const updateTransaction = (t: Transaction) => setTransactions(prev => prev.map(x => x.id === t.id ? t : x));
   const deleteTransaction = (id: number) => setTransactions(prev => prev.filter(x => x.id !== id));
 
   const addCategory = (c: Omit<Category, "id">) => setCategories(prev => [...prev, { ...c, id: ++nextId }]);
   const updateCategory = (c: Category) => setCategories(prev => prev.map(x => x.id === c.id ? c : x));
-  const deleteCategory = (id: number) => setCategories(prev => prev.filter(x => x.id !== id));
+  // When deleting a main category, also remove its subcategories.
+  const deleteCategory = (id: number) =>
+    setCategories(prev => prev.filter(x => x.id !== id && x.parentId !== id));
 
   const addAccount = (a: Omit<Account, "id">) => setAccounts(prev => [...prev, { ...a, id: ++nextId }]);
   const updateAccount = (a: Account) => setAccounts(prev => prev.map(x => x.id === a.id ? a : x));
@@ -75,6 +91,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       categories, addCategory, updateCategory, deleteCategory,
       accounts, addAccount, updateAccount, deleteAccount,
       getCat, getAcc,
+      getMainCategories, getSubCategories,
     }}>
       {children}
     </AppContext.Provider>

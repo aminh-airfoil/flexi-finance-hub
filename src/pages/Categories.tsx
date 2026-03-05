@@ -10,13 +10,24 @@ export default function CategoriesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
 
-  const withSpend = useMemo(() =>
-    categories.map(cat => ({
-      ...cat,
-      spent: transactions.filter(t => t.cat === cat.id && t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
-    })),
-    [categories, transactions]
+  const withSpend = useMemo(
+    () =>
+      categories.map(cat => ({
+        ...cat,
+        spent: transactions
+          .filter(t => t.cat === cat.id && t.amount < 0)
+          .reduce((s, t) => s + Math.abs(t.amount), 0),
+      })),
+    [categories, transactions],
   );
+
+  const mainCategories = useMemo(
+    () => withSpend.filter(c => !c.parentId),
+    [withSpend],
+  );
+
+  const subCategoriesFor = (parentId: number) =>
+    withSpend.filter(c => c.parentId === parentId);
 
   const totalSpent = withSpend.reduce((s, c) => s + c.spent, 0);
 
@@ -46,44 +57,134 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* Category cards */}
+      {/* Category cards grouped by main category */}
       <div className="px-4 space-y-3">
-        {withSpend.map(cat => {
-          const Icon = cat.icon;
-          const pctUsed = Math.min(100, (cat.spent / cat.budget) * 100);
-          const over = cat.spent > cat.budget;
-          const remaining = cat.budget - cat.spent;
+        {mainCategories.map(main => {
+          const Icon = main.icon;
+          const pctUsedMain = Math.min(100, (main.spent / main.budget) * 100);
+          const overMain = main.spent > main.budget;
+          const remainingMain = main.budget - main.spent;
+          const subs = subCategoriesFor(main.id);
+
           return (
-            <div key={cat.id} className={`bg-card border rounded-2xl p-4 group ${over ? "border-destructive/30" : "border-border"}`}>
+            <div
+              key={main.id}
+              className={`bg-card border rounded-2xl p-4 group ${overMain ? "border-destructive/30" : "border-border"}`}
+            >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ background: `${cat.color}22` }}>
-                  <Icon size={18} style={{ color: cat.color }} />
+                <div
+                  className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center"
+                  style={{ background: `${main.color}22` }}
+                >
+                  <Icon size={18} style={{ color: main.color }} />
                 </div>
                 <div className="flex-1">
-                  <div className="text-sm font-bold text-foreground">{cat.name}</div>
-                  <div className="text-[11px] text-muted-foreground">Budget: {fmt(cat.budget)}</div>
+                  <div className="text-sm font-bold text-foreground">{main.name}</div>
+                  <div className="text-[11px] text-muted-foreground">Budget: {fmt(main.budget)}</div>
                 </div>
                 <div className="text-right">
-                  <div className={`text-base font-black ${over ? "text-destructive" : "text-foreground"}`}>{fmt(cat.spent)}</div>
-                  {over
-                    ? <div className="text-[10px] text-destructive mt-0.5">+{fmt(Math.abs(remaining))} over</div>
-                    : <div className="text-[10px] text-success mt-0.5">{fmt(remaining)} left</div>}
+                  <div className={`text-base font-black ${overMain ? "text-destructive" : "text-foreground"}`}>
+                    {fmt(main.spent)}
+                  </div>
+                  {overMain ? (
+                    <div className="text-[10px] text-destructive mt-0.5">
+                      +{fmt(Math.abs(remainingMain))} over
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-success mt-0.5">{fmt(remainingMain)} left</div>
+                  )}
                 </div>
                 <div className="hidden group-hover:flex items-center gap-1">
-                  <button onClick={() => { setEditing(cat); setDialogOpen(true); }} className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground"><Edit3 size={13} /></button>
-                  <button onClick={() => deleteCategory(cat.id)} className="p-1.5 rounded-md hover:bg-destructive-dim text-muted-foreground hover:text-destructive"><Trash2 size={13} /></button>
+                  <button
+                    onClick={() => {
+                      setEditing(main);
+                      setDialogOpen(true);
+                    }}
+                    className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground"
+                  >
+                    <Edit3 size={13} />
+                  </button>
+                  <button
+                    onClick={() => deleteCategory(main.id)}
+                    className="p-1.5 rounded-md hover:bg-destructive-dim text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 size={13} />
+                  </button>
                 </div>
               </div>
               <div className="h-1.5 bg-border rounded-full">
-                <div className="h-full rounded-full transition-all duration-500" style={{
-                  width: `${pctUsed}%`,
-                  background: over ? "#F43F5E" : pctUsed > 80 ? "#F59E0B" : cat.color,
-                }} />
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${pctUsedMain}%`,
+                    background: overMain ? "#F43F5E" : pctUsedMain > 80 ? "#F59E0B" : main.color,
+                  }}
+                />
               </div>
-              <div className="flex justify-between mt-1.5">
-                <span className="text-[10px] text-muted-foreground">{pctUsed.toFixed(0)}% used</span>
-                {over && <span className="text-[10px] text-destructive font-semibold">Over budget!</span>}
+              <div className="flex justify-between mt-1.5 mb-2">
+                <span className="text-[10px] text-muted-foreground">{pctUsedMain.toFixed(0)}% used</span>
+                {overMain && <span className="text-[10px] text-destructive font-semibold">Over budget!</span>}
               </div>
+
+              {subs.length > 0 && (
+                <div className="mt-2 space-y-1 border-t border-border/60 pt-2">
+                  {subs.map(sub => {
+                    const pctUsedSub = Math.min(100, (sub.spent / sub.budget) * 100);
+                    const overSub = sub.spent > sub.budget;
+                    const remainingSub = sub.budget - sub.spent;
+                    return (
+                      <div
+                        key={sub.id}
+                        className="flex items-center gap-2 text-[11px] text-muted-foreground group/sub"
+                      >
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ background: sub.color }} />
+                        <div className="flex-1">
+                          <div className="flex justify-between">
+                            <span className="font-medium text-foreground/80">{sub.name}</span>
+                            <span className={overSub ? "text-destructive" : "text-foreground"}>
+                              {fmt(sub.spent)}
+                            </span>
+                          </div>
+                          <div className="h-1 bg-border rounded-full mt-0.5">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${pctUsedSub}%`,
+                                background: overSub ? "#F43F5E" : pctUsedSub > 80 ? "#F59E0B" : sub.color,
+                              }}
+                            />
+                          </div>
+                          <div className="flex justify-between mt-0.5">
+                            <span className="text-[10px]">
+                              {pctUsedSub.toFixed(0)}% used · Budget {fmt(sub.budget)}
+                            </span>
+                            {overSub && (
+                              <span className="text-[10px] text-destructive font-semibold">Over</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="hidden group-hover/sub:flex flex-col gap-1 ml-1">
+                          <button
+                            onClick={() => {
+                              setEditing(sub);
+                              setDialogOpen(true);
+                            }}
+                            className="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground"
+                          >
+                            <Edit3 size={11} />
+                          </button>
+                          <button
+                            onClick={() => deleteCategory(sub.id)}
+                            className="p-1 rounded-md hover:bg-destructive-dim text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}

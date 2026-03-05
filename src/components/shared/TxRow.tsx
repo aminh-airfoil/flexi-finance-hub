@@ -10,10 +10,20 @@ interface TxRowProps {
 }
 
 export function TxRow({ tx, compact, onEdit, onDelete }: TxRowProps) {
-  const { fmt, getCat } = useApp();
+  const { fmt, getCat, getCat: getCategory, getMainCategories, getSubCategories } = useApp();
   const cat = getCat(tx.cat);
   const Icon = cat?.icon || (tx.amount > 0 ? TrendingUp : TrendingDown);
   const color = cat?.color || (tx.amount > 0 ? "#10B981" : "#64748B");
+
+  let categoryLabel = "Income";
+  if (cat) {
+    if (!cat.parentId) {
+      categoryLabel = cat.name;
+    } else {
+      const parent = getCategory(cat.parentId);
+      categoryLabel = parent ? `${parent.name} · ${cat.name}` : cat.name;
+    }
+  }
 
   return (
     <div className="flex items-center gap-3 px-4 py-3 border-b border-border group">
@@ -26,7 +36,7 @@ export function TxRow({ tx, compact, onEdit, onDelete }: TxRowProps) {
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-semibold text-foreground truncate">{tx.desc}</div>
         <div className="text-[11px] text-muted-foreground mt-0.5">
-          {cat ? cat.name : "Income"} · {new Date(tx.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+          {categoryLabel} · {new Date(tx.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
         </div>
       </div>
       <div className={`text-sm font-bold flex-shrink-0 ${tx.amount > 0 ? "text-success" : "text-foreground"}`}>

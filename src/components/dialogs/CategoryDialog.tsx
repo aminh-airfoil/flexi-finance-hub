@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,16 +27,27 @@ interface Props {
 }
 
 export function CategoryDialog({ open, onOpenChange, category }: Props) {
-  const { addCategory, updateCategory } = useApp();
-  const [form, setForm] = useState({ name: "", budget: "", iconIdx: 0, colorIdx: 0 });
+  const { addCategory, updateCategory, categories } = useApp();
+  const [form, setForm] = useState({ name: "", budget: "", iconIdx: 0, colorIdx: 0, parentId: "" });
+
+  const mainCategories = useMemo(
+    () => categories.filter(c => !c.parentId),
+    [categories],
+  );
 
   useEffect(() => {
     if (category) {
       const iconIdx = ICON_OPTIONS.findIndex(o => o.icon === category.icon);
       const colorIdx = COLOR_OPTIONS.indexOf(category.color);
-      setForm({ name: category.name, budget: String(category.budget), iconIdx: iconIdx >= 0 ? iconIdx : 0, colorIdx: colorIdx >= 0 ? colorIdx : 0 });
+      setForm({
+        name: category.name,
+        budget: String(category.budget),
+        iconIdx: iconIdx >= 0 ? iconIdx : 0,
+        colorIdx: colorIdx >= 0 ? colorIdx : 0,
+        parentId: category.parentId != null ? String(category.parentId) : "",
+      });
     } else {
-      setForm({ name: "", budget: "", iconIdx: 0, colorIdx: 0 });
+      setForm({ name: "", budget: "", iconIdx: 0, colorIdx: 0, parentId: "" });
     }
   }, [category, open]);
 
@@ -47,6 +58,7 @@ export function CategoryDialog({ open, onOpenChange, category }: Props) {
       budget: parseFloat(form.budget),
       icon: ICON_OPTIONS[form.iconIdx].icon,
       color: COLOR_OPTIONS[form.colorIdx],
+      parentId: form.parentId ? parseInt(form.parentId) : null,
     };
     if (category) {
       updateCategory({ ...data, id: category.id });
@@ -66,6 +78,23 @@ export function CategoryDialog({ open, onOpenChange, category }: Props) {
           <div>
             <Label>Name</Label>
             <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required className="bg-background border-border" />
+          </div>
+          <div>
+            <Label>Parent category</Label>
+            <select
+              value={form.parentId}
+              onChange={e => setForm(f => ({ ...f, parentId: e.target.value }))}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground mt-1"
+            >
+              <option value="">None (main category)</option>
+              {mainCategories
+                .filter(c => !category || c.id !== category.id)
+                .map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+            </select>
           </div>
           <div>
             <Label>Monthly Budget</Label>
