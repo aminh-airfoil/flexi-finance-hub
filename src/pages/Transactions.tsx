@@ -6,22 +6,43 @@ import { TransactionDialog } from "@/components/dialogs/TransactionDialog";
 import { Transaction } from "@/lib/types";
 
 export default function TransactionsPage() {
-  const { transactions, deleteTransaction } = useApp();
+  const { transactions, deleteTransaction, categories } = useApp();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [mainFilter, setMainFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
 
-  const sorted = useMemo(() =>
-    [...transactions]
+  const mainCategories = useMemo(
+    () => categories.filter(c => !c.parentId),
+    [categories],
+  );
+
+  const sorted = useMemo(() => {
+    const byId = new Map(categories.map(c => [c.id, c]));
+
+    return [...transactions]
       .filter(t => {
         const matchSearch = t.desc.toLowerCase().includes(search.toLowerCase());
         const matchFilter = filter === "all" ? true : filter === "income" ? t.amount > 0 : t.amount < 0;
-        return matchSearch && matchFilter;
+
+        let matchMain = true;
+        if (mainFilter !== "all") {
+          const selectedId = Number(mainFilter);
+          const cat = t.cat != null ? byId.get(t.cat) : undefined;
+          if (!cat) {
+            matchMain = false;
+          } else if (!cat.parentId) {
+            matchMain = cat.id === selectedId;
+          } else {
+            matchMain = cat.parentId === selectedId;
+          }
+        }
+
+        return matchSearch && matchFilter && matchMain;
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    [transactions, search, filter]
-  );
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [transactions, search, filter, mainFilter, categories]);
 
   return (
     <div className="pb-6 animate-fade-in">
@@ -42,15 +63,36 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {/* Filter pills */}
-      <div className="px-4 pb-4 flex gap-2">
-        {["all", "income", "expense"].map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-all ${
-              filter === f ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"
-            }`}
-          >{f}</button>
-        ))}
+      {/* Filter pills & main category filter */}
+      <div className="px-4 pb-4 flex flex-col gap-2">
+        <div className="flex gap-2">
+          {["all", "income", "expense"].map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-all ${
+                filter === f ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span>Main category:</span>
+          <select
+            value={mainFilter}
+            onChange={e => setMainFilter(e.target.value)}
+            className="ml-auto rounded-full border border-border bg-card px-3 py-1 text-[11px] text-foreground"
+          >
+            <option value="all">All categories</option>
+            {mainCategories.map(c => (
+              <option key={c.id} value={String(c.id)}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* List */}

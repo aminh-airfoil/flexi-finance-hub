@@ -4,14 +4,21 @@ import {
 import { Category, Account, Transaction } from "./types";
 
 export const defaultCategories: Category[] = [
-  { id: 1, name: "Food & Dining",   icon: Utensils,      color: "#F59E0B", budget: 800  },
-  { id: 2, name: "Shopping",        icon: ShoppingCart,   color: "#8B5CF6", budget: 600  },
-  { id: 3, name: "Transport",       icon: Car,            color: "#0EA5E9", budget: 300  },
-  { id: 4, name: "Utilities",       icon: Zap,            color: "#10B981", budget: 250  },
-  { id: 5, name: "Healthcare",      icon: Heart,          color: "#F43F5E", budget: 400  },
-  { id: 6, name: "Entertainment",   icon: Monitor,        color: "#EC4899", budget: 200  },
-  { id: 7, name: "Travel",          icon: Plane,          color: "#14B8A6", budget: 1000 },
-  { id: 8, name: "Coffee & Drinks", icon: Coffee,         color: "#D97706", budget: 150  },
+  // Main categories (parentId: null)
+  { id: 1, name: "Food & Dining",   parentId: null, icon: Utensils,      color: "#F59E0B", budget: 800  },
+  { id: 2, name: "Shopping",        parentId: null, icon: ShoppingCart,   color: "#8B5CF6", budget: 600  },
+  { id: 3, name: "Transport",       parentId: null, icon: Car,            color: "#0EA5E9", budget: 300  },
+  { id: 4, name: "Utilities",       parentId: null, icon: Zap,            color: "#10B981", budget: 250  },
+  { id: 5, name: "Healthcare",      parentId: null, icon: Heart,          color: "#F43F5E", budget: 400  },
+  { id: 6, name: "Entertainment",   parentId: null, icon: Monitor,        color: "#EC4899", budget: 200  },
+  { id: 7, name: "Travel",          parentId: null, icon: Plane,          color: "#14B8A6", budget: 1000 },
+  { id: 8, name: "Coffee & Drinks", parentId: null, icon: Coffee,         color: "#D97706", budget: 150  },
+
+  // Example subcategories (point to the main categories above)
+  { id: 21, name: "Groceries",      parentId: 1,   icon: Utensils,      color: "#FBBF24", budget: 500  },
+  { id: 22, name: "Restaurants",    parentId: 1,   icon: Utensils,      color: "#F97316", budget: 300  },
+  { id: 23, name: "Online Shopping",parentId: 2,   icon: ShoppingCart,  color: "#A855F7", budget: 400  },
+  { id: 24, name: "Clothing",       parentId: 2,   icon: ShoppingCart,  color: "#6366F1", budget: 200  },
 ];
 
 export const defaultAccounts: Account[] = [

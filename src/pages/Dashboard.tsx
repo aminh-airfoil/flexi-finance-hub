@@ -7,12 +7,49 @@ import { StatBadge } from "@/components/shared/StatBadge";
 import { TxRow } from "@/components/shared/TxRow";
 import { dailyTrend } from "@/lib/data";
 
-const prevMonth = { inflow: 6890, outflow: 3210, transactions: 32 };
-const currMonth = { inflow: 6740, outflow: 3890, transactions: 20 };
-
 export default function DashboardPage() {
   const { fmt, categories, transactions, getCat } = useApp();
   const isMobile = useIsMobile();
+
+  const { prevMonth, currMonth, currentLabel } = useMemo(() => {
+    if (!transactions.length) {
+      const empty = { inflow: 0, outflow: 0, transactions: 0 };
+      return { prevMonth: empty, currMonth: empty, currentLabel: "" };
+    }
+
+    type MonthAgg = { inflow: number; outflow: number; transactions: number };
+
+    const monthMap = new Map<string, MonthAgg>();
+
+    transactions.forEach(t => {
+      const d = new Date(t.date);
+      if (Number.isNaN(d.getTime())) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const entry = monthMap.get(key) || { inflow: 0, outflow: 0, transactions: 0 };
+      if (t.amount > 0) {
+        entry.inflow += t.amount;
+      } else if (t.amount < 0) {
+        entry.outflow += Math.abs(t.amount);
+      }
+      entry.transactions += 1;
+      monthMap.set(key, entry);
+    });
+
+    const keys = Array.from(monthMap.keys()).sort(); // yyyy-mm sorts chronologically
+    const currKey = keys[keys.length - 1];
+    const prevKey = keys.length > 1 ? keys[keys.length - 2] : undefined;
+
+    const curr = monthMap.get(currKey)!;
+    const prev = prevKey ? monthMap.get(prevKey)! : curr;
+
+    const [year, month] = currKey.split("-");
+    const monthName = new Date(Number(year), Number(month) - 1, 1).toLocaleString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
+
+    return { prevMonth: prev, currMonth: curr, currentLabel: monthName };
+  }, [transactions]);
 
   const spendByCat = useMemo(() =>
     categories.map(cat => ({
@@ -57,7 +94,9 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="px-4 pt-5 pb-4 flex justify-between items-center">
         <div>
-          <div className="text-xs text-muted-foreground font-medium">March 2025</div>
+          <div className="text-xs text-muted-foreground font-medium">
+            {currentLabel || "No data"}
+          </div>
           <div className="text-2xl font-black text-foreground tracking-tight">Overview</div>
         </div>
         <div className="flex gap-2">
