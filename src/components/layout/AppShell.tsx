@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Home, ArrowLeftRight, Wallet, Tag } from "lucide-react";
+import { Home, ArrowLeftRight, Wallet, Tag, LogOut } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CurrencyPicker } from "@/components/shared/CurrencyPicker";
+import { useAuth } from "@/contexts/AuthContext";
+import { useApp } from "@/contexts/AppContext";
 import DashboardPage from "@/pages/Dashboard";
 import TransactionsPage from "@/pages/Transactions";
 import AccountsPage from "@/pages/Accounts";
@@ -26,6 +28,18 @@ const pageMap: Record<TabId, React.ReactNode> = {
 export default function AppShell() {
   const [active, setActive] = useState<TabId>("dashboard");
   const isMobile = useIsMobile();
+  const { user, signOut } = useAuth();
+  const { loading } = useApp();
+
+  const initials = user?.email ? user.email.substring(0, 2).toUpperCase() : "??";
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">Loading data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -55,6 +69,24 @@ export default function AppShell() {
           <div className="p-4 border-t border-border">
             <CurrencyPicker />
           </div>
+          {/* User info */}
+          <div className="p-4 border-t border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-primary">{initials}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold text-foreground truncate">{user?.email}</div>
+              </div>
+              <button
+                onClick={signOut}
+                className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                title="Sign out"
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
+          </div>
         </aside>
       )}
 
@@ -62,7 +94,14 @@ export default function AppShell() {
       <main className={`flex-1 ${!isMobile ? "ml-64" : ""} ${isMobile ? "pb-20" : ""} overflow-y-auto min-h-screen`}>
         {isMobile && (
           <div className="flex items-center justify-between px-4 pt-4">
-            <div />
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="text-[10px] font-bold text-primary">{initials}</span>
+              </div>
+              <button onClick={signOut} className="text-xs text-muted-foreground hover:text-foreground">
+                <LogOut size={14} />
+              </button>
+            </div>
             <CurrencyPicker />
           </div>
         )}

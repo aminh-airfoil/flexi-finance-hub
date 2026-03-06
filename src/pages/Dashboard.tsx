@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, TrendingDown, ArrowLeftRight, Bell } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { StatBadge } from "@/components/shared/StatBadge";
 import { TxRow } from "@/components/shared/TxRow";
@@ -9,7 +10,10 @@ import { dailyTrend } from "@/lib/data";
 
 export default function DashboardPage() {
   const { fmt, categories, transactions, getCat } = useApp();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
+
+  const initials = user?.email ? user.email.substring(0, 2).toUpperCase() : "??";
 
   const { prevMonth, currMonth, currentLabel } = useMemo(() => {
     if (!transactions.length) {
@@ -18,7 +22,6 @@ export default function DashboardPage() {
     }
 
     type MonthAgg = { inflow: number; outflow: number; transactions: number };
-
     const monthMap = new Map<string, MonthAgg>();
 
     transactions.forEach(t => {
@@ -26,33 +29,25 @@ export default function DashboardPage() {
       if (Number.isNaN(d.getTime())) return;
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const entry = monthMap.get(key) || { inflow: 0, outflow: 0, transactions: 0 };
-      if (t.amount > 0) {
-        entry.inflow += t.amount;
-      } else if (t.amount < 0) {
-        entry.outflow += Math.abs(t.amount);
-      }
+      if (t.amount > 0) entry.inflow += t.amount;
+      else if (t.amount < 0) entry.outflow += Math.abs(t.amount);
       entry.transactions += 1;
       monthMap.set(key, entry);
     });
 
-    const keys = Array.from(monthMap.keys()).sort(); // yyyy-mm sorts chronologically
+    const keys = Array.from(monthMap.keys()).sort();
     const currKey = keys[keys.length - 1];
     const prevKey = keys.length > 1 ? keys[keys.length - 2] : undefined;
-
     const curr = monthMap.get(currKey)!;
     const prev = prevKey ? monthMap.get(prevKey)! : curr;
-
     const [year, month] = currKey.split("-");
-    const monthName = new Date(Number(year), Number(month) - 1, 1).toLocaleString("en-US", {
-      month: "long",
-      year: "numeric",
-    });
+    const monthName = new Date(Number(year), Number(month) - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
 
     return { prevMonth: prev, currMonth: curr, currentLabel: monthName };
   }, [transactions]);
 
   const spendByCat = useMemo(() =>
-    categories.map(cat => ({
+    categories.filter(c => !c.parentId).map(cat => ({
       ...cat,
       spent: transactions.filter(t => t.cat === cat.id && t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
     })).filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent),
@@ -75,13 +70,13 @@ export default function DashboardPage() {
     { label: "Transactions", value: currMonth.transactions, prev: prevMonth.transactions, isCnt: true, color: "text-primary", icon: ArrowLeftRight },
   ];
 
-  const pct = (curr: number, prev: number) => ((curr - prev) / prev) * 100;
+  const pct = (curr: number, prev: number) => prev === 0 ? 0 : ((curr - prev) / prev) * 100;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     return (
       <div className="bg-card border border-border rounded-xl p-3 text-xs">
-        <div className="text-muted-foreground mb-1">Mar {label}</div>
+        <div className="text-muted-foreground mb-1">Day {label}</div>
         {payload.map((p: any, i: number) => (
           <div key={i} style={{ color: p.color }} className="font-bold">{p.name}: {fmt(p.value)}</div>
         ))}
@@ -91,25 +86,21 @@ export default function DashboardPage() {
 
   return (
     <div className="pb-6 animate-fade-in">
-      {/* Header */}
       <div className="px-4 pt-5 pb-4 flex justify-between items-center">
         <div>
-          <div className="text-xs text-muted-foreground font-medium">
-            {currentLabel || "No data"}
-          </div>
+          <div className="text-xs text-muted-foreground font-medium">{currentLabel || "No data yet"}</div>
           <div className="text-2xl font-black text-foreground tracking-tight">Overview</div>
         </div>
         <div className="flex gap-2">
           <button className="w-9 h-9 rounded-[10px] bg-card border border-border flex items-center justify-center">
             <Bell size={16} className="text-muted-foreground" />
           </button>
-          <div className="w-9 h-9 rounded-[10px] bg-primary-dim flex items-center justify-center">
-            <span className="text-xs font-black text-primary">JD</span>
+          <div className="w-9 h-9 rounded-[10px] bg-primary/20 flex items-center justify-center">
+            <span className="text-xs font-black text-primary">{initials}</span>
           </div>
         </div>
       </div>
 
-      {/* Bento Grid */}
       <div className={`px-4 grid gap-3 ${isMobile ? "grid-cols-2" : "grid-cols-4"}`}>
         {bento.map((b, i) => {
           const Icon = b.icon;
@@ -132,11 +123,10 @@ export default function DashboardPage() {
       </div>
 
       <div className={`px-4 mt-4 ${isMobile ? "space-y-3" : "grid grid-cols-2 gap-4"}`}>
-        {/* Chart */}
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex justify-between items-center mb-4">
             <div className="text-sm font-bold text-foreground">Expense Trend</div>
-            <div className="text-[11px] text-muted-foreground bg-subtle px-3 py-1 rounded-full">Mar 2025</div>
+            <div className="text-[11px] text-muted-foreground bg-subtle px-3 py-1 rounded-full">Sample</div>
           </div>
           <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={dailyTrend} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
@@ -155,10 +145,10 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </div>
 
-        {/* Spending by Category */}
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="text-sm font-bold text-foreground mb-4">Spending by Category</div>
           <div className="space-y-3">
+            {spendByCat.length === 0 && <div className="text-sm text-muted-foreground">No spending data yet</div>}
             {spendByCat.map(cat => {
               const Icon = cat.icon;
               const pctVal = Math.min(100, (cat.spent / cat.budget) * 100);
@@ -183,13 +173,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Transactions */}
       <div className="px-4 mt-4">
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex justify-between items-center mb-1">
             <div className="text-sm font-bold text-foreground">Recent Transactions</div>
             <span className="text-[11px] text-primary font-semibold">See all</span>
           </div>
+          {recentTx.length === 0 && <div className="p-4 text-sm text-muted-foreground">No transactions yet</div>}
           {recentTx.map(tx => <TxRow key={tx.id} tx={tx} compact />)}
         </div>
       </div>

@@ -3,20 +3,17 @@ import { LucideIcon } from "lucide-react";
 export type Currency = "USD" | "MYR";
 
 export interface Category {
-  id: number;
+  id: string;
   name: string;
-  /**
-   * If null/undefined → main category.
-   * If set         → subcategory of the category with this id.
-   */
-  parentId?: number | null;
+  parentId?: string | null;
   icon: LucideIcon;
+  iconName: string;
   color: string;
   budget: number;
 }
 
 export interface Account {
-  id: number;
+  id: string;
   name: string;
   bank: string;
   balance: number;
@@ -25,11 +22,11 @@ export interface Account {
 }
 
 export interface Transaction {
-  id: number;
+  id: string;
   date: string;
   desc: string;
-  cat: number | null;
+  cat: string | null;
   amount: number;
-  acc: number;
+  acc: string;
   note: string;
 }
