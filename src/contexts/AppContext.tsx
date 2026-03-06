@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { Currency, Category, Account, Transaction } from "@/lib/types";
-import { EXCHANGE_RATES } from "@/lib/data";
 import { getIconByName } from "@/lib/icons";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -51,14 +50,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const convert = useCallback((n: number) => n * EXCHANGE_RATES[currency], [currency]);
+  const convert = useCallback((n: number) => n, []);
   const fmt = useCallback((n: number) => {
-    const converted = n * EXCHANGE_RATES[currency];
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
       minimumFractionDigits: 2,
-    }).format(converted);
+    }).format(n);
   }, [currency]);
 
   const getCat = useCallback((id: string | null) => id ? categories.find(c => c.id === id) : undefined, [categories]);

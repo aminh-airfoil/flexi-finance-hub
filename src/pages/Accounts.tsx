@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Wallet, ChevronRight, Plus, Edit3, Trash2 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
@@ -6,16 +6,59 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { StatBadge } from "@/components/shared/StatBadge";
 import { AccountDialog } from "@/components/dialogs/AccountDialog";
 import { Account } from "@/lib/types";
-import { monthlyFlow } from "@/lib/data";
 
 export default function AccountsPage() {
-  const { accounts, fmt, deleteAccount } = useApp();
+  const { accounts, transactions, fmt, deleteAccount } = useApp();
   const isMobile = useIsMobile();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
 
-  const totalNet = accounts.reduce((s, a) => s + a.balance, 0);
-  const pieData = accounts.map(a => ({ name: a.name, value: Math.abs(a.balance), color: a.color }));
+  type AccountWithComputed = Account & { computedBalance: number };
+
+  const accountsWithComputed: AccountWithComputed[] = useMemo(() => {
+    if (!accounts.length) return [];
+
+    const deltaByAccount = new Map<string, number>();
+    transactions.forEach(t => {
+      if (!t.acc) return;
+      const current = deltaByAccount.get(t.acc) ?? 0;
+      deltaByAccount.set(t.acc, current + t.amount);
+    });
+
+    return accounts.map(a => {
+      const txDelta = deltaByAccount.get(a.id) ?? 0;
+      return {
+        ...a,
+        // initial balance from account setup + net movement from transactions
+        computedBalance: a.balance + txDelta,
+      };
+    });
+  }, [accounts, transactions]);
+
+  const totalNet = accountsWithComputed.reduce((s, a) => s + a.computedBalance, 0);
+  const pieData = accountsWithComputed.map(a => ({ name: a.name, value: Math.abs(a.computedBalance), color: a.color }));
+
+  const monthlyFlow = useMemo(() => {
+    if (!transactions.length) return [];
+
+    type FlowAgg = { m: string; i: number; e: number };
+    const monthMap = new Map<string, FlowAgg>();
+
+    transactions.forEach(t => {
+      const d = new Date(t.date);
+      if (Number.isNaN(d.getTime())) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const monthLabel = new Date(d.getFullYear(), d.getMonth(), 1).toLocaleString("en-US", { month: "short" });
+      const entry = monthMap.get(key) || { m: monthLabel, i: 0, e: 0 };
+      if (t.amount > 0) entry.i += t.amount;
+      else if (t.amount < 0) entry.e += Math.abs(t.amount);
+      monthMap.set(key, entry);
+    });
+
+    const keys = Array.from(monthMap.keys()).sort();
+    const lastKeys = keys.slice(-6); // last 6 months with data
+    return lastKeys.map(k => monthMap.get(k)!);
+  }, [transactions]);
 
   return (
     <div className="pb-6 animate-fade-in">
@@ -45,8 +88,8 @@ export default function AccountsPage() {
       </div>
 
       <div className={`px-4 ${isMobile ? "space-y-3" : "grid grid-cols-2 gap-3"}`}>
-        {accounts.length === 0 && <div className="text-sm text-muted-foreground p-4">No accounts yet. Add one to get started!</div>}
-        {accounts.map(acc => (
+        {accountsWithComputed.length === 0 && <div className="text-sm text-muted-foreground p-4">No accounts yet. Add one to get started!</div>}
+        {accountsWithComputed.map(acc => (
           <div key={acc.id} className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3.5 group">
             <div className="w-11 h-11 rounded-[14px] flex-shrink-0 flex items-center justify-center" style={{ background: `${acc.color}22` }}>
               <Wallet size={20} style={{ color: acc.color }} />
@@ -56,7 +99,7 @@ export default function AccountsPage() {
               <div className="text-[11px] text-muted-foreground mt-0.5">{acc.bank} · {acc.type}</div>
             </div>
             <div className="text-right">
-              <div className={`text-base font-black ${acc.balance < 0 ? "text-destructive" : "text-foreground"}`}>{fmt(acc.balance)}</div>
+              <div className={`text-base font-black ${acc.computedBalance < 0 ? "text-destructive" : "text-foreground"}`}>{fmt(acc.computedBalance)}</div>
               <div className="text-[10px] text-muted-foreground mt-0.5">Available</div>
             </div>
             <div className="hidden group-hover:flex items-center gap-1">

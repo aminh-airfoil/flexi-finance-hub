@@ -10,17 +10,38 @@ export default function CategoriesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
 
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-11
+
   const withSpend = useMemo(
     () => categories.map(cat => ({
       ...cat,
-      spent: transactions.filter(t => t.cat === cat.id && t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
+      spent: transactions
+        .filter(t => {
+          if (t.cat !== cat.id || t.amount < 0 === false) return false;
+          const d = new Date(t.date);
+          if (Number.isNaN(d.getTime())) return false;
+          return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+        })
+        .reduce((s, t) => s + Math.abs(t.amount), 0),
     })),
-    [categories, transactions],
+    [categories, transactions, currentYear, currentMonth],
   );
 
-  const mainCategories = useMemo(() => withSpend.filter(c => !c.parentId), [withSpend]);
+  const mainCategories = useMemo(
+    () =>
+      withSpend
+        .filter(c => !c.parentId)
+        .map(main => {
+          const subs = withSpend.filter(c => c.parentId === main.id);
+          const subTotal = subs.reduce((s, sub) => s + sub.spent, 0);
+          return { ...main, spentWithSubs: main.spent + subTotal };
+        }),
+    [withSpend],
+  );
   const subCategoriesFor = (parentId: string) => withSpend.filter(c => c.parentId === parentId);
-  const totalSpent = mainCategories.reduce((s, c) => s + c.spent, 0);
+  const totalSpent = mainCategories.reduce((s, c: any) => s + c.spentWithSubs, 0);
 
   return (
     <div className="pb-6 animate-fade-in">
@@ -49,11 +70,11 @@ export default function CategoriesPage() {
 
       <div className="px-4 space-y-3">
         {mainCategories.length === 0 && <div className="text-sm text-muted-foreground p-4">No categories yet. Add one to get started!</div>}
-        {mainCategories.map(main => {
+        {mainCategories.map((main: any) => {
           const Icon = main.icon;
-          const pctUsedMain = main.budget > 0 ? Math.min(100, (main.spent / main.budget) * 100) : 0;
-          const overMain = main.spent > main.budget;
-          const remainingMain = main.budget - main.spent;
+          const pctUsedMain = main.budget > 0 ? Math.min(100, (main.spentWithSubs / main.budget) * 100) : 0;
+          const overMain = main.spentWithSubs > main.budget;
+          const remainingMain = main.budget - main.spentWithSubs;
           const subs = subCategoriesFor(main.id);
 
           return (
@@ -67,7 +88,7 @@ export default function CategoriesPage() {
                   <div className="text-[11px] text-muted-foreground">Budget: {fmt(main.budget)}</div>
                 </div>
                 <div className="text-right">
-                  <div className={`text-base font-black ${overMain ? "text-destructive" : "text-foreground"}`}>{fmt(main.spent)}</div>
+                  <div className={`text-base font-black ${overMain ? "text-destructive" : "text-foreground"}`}>{fmt(main.spentWithSubs)}</div>
                   {overMain ? (
                     <div className="text-[10px] text-destructive mt-0.5">+{fmt(Math.abs(remainingMain))} over</div>
                   ) : (
