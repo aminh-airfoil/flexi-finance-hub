@@ -6,11 +6,11 @@ interface TxRowProps {
   tx: Transaction;
   compact?: boolean;
   onEdit?: (tx: Transaction) => void;
-  onDelete?: (id: number) => void;
+  onDelete?: (id: string) => void;
 }
 
 export function TxRow({ tx, compact, onEdit, onDelete }: TxRowProps) {
-  const { fmt, getCat, getCat: getCategory, getMainCategories, getSubCategories } = useApp();
+  const { fmt, getCat } = useApp();
   const cat = getCat(tx.cat);
   const Icon = cat?.icon || (tx.amount > 0 ? TrendingUp : TrendingDown);
   const color = cat?.color || (tx.amount > 0 ? "#10B981" : "#64748B");
@@ -20,7 +20,7 @@ export function TxRow({ tx, compact, onEdit, onDelete }: TxRowProps) {
     if (!cat.parentId) {
       categoryLabel = cat.name;
     } else {
-      const parent = getCategory(cat.parentId);
+      const parent = getCat(cat.parentId);
       categoryLabel = parent ? `${parent.name} · ${cat.name}` : cat.name;
     }
   }

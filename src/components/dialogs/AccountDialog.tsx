@@ -28,13 +28,13 @@ export function AccountDialog({ open, onOpenChange, account }: Props) {
     }
   }, [account, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data = { name: form.name, bank: form.bank, balance: parseFloat(form.balance), type: form.type, color: COLOR_OPTIONS[form.colorIdx] };
     if (account) {
-      updateAccount({ ...data, id: account.id });
+      await updateAccount({ ...data, id: account.id });
     } else {
-      addAccount(data);
+      await addAccount(data);
     }
     onOpenChange(false);
   };

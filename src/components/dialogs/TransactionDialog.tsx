@@ -14,25 +14,19 @@ interface Props {
 
 export function TransactionDialog({ open, onOpenChange, transaction }: Props) {
   const { addTransaction, updateTransaction, categories, accounts } = useApp();
-  const [form, setForm] = useState({ desc: "", amount: "", date: "", cat: "", acc: "1", note: "" });
+  const [form, setForm] = useState({ desc: "", amount: "", date: "", cat: "", acc: "", note: "" });
 
-  const mainCategories = useMemo(
-    () => categories.filter(c => !c.parentId),
-    [categories],
-  );
+  const mainCategories = useMemo(() => categories.filter(c => !c.parentId), [categories]);
 
-  const subCategoriesByParent = useMemo(
-    () => {
-      const map: Record<number, typeof categories> = {};
-      categories.forEach(c => {
-        if (c.parentId == null) return;
-        if (!map[c.parentId]) map[c.parentId] = [];
-        map[c.parentId].push(c);
-      });
-      return map;
-    },
-    [categories],
-  );
+  const subCategoriesByParent = useMemo(() => {
+    const map: Record<string, typeof categories> = {};
+    categories.forEach(c => {
+      if (c.parentId == null) return;
+      if (!map[c.parentId]) map[c.parentId] = [];
+      map[c.parentId].push(c);
+    });
+    return map;
+  }, [categories]);
 
   useEffect(() => {
     if (transaction) {
@@ -40,29 +34,35 @@ export function TransactionDialog({ open, onOpenChange, transaction }: Props) {
         desc: transaction.desc,
         amount: String(transaction.amount),
         date: transaction.date,
-        cat: transaction.cat ? String(transaction.cat) : "",
-        acc: String(transaction.acc),
+        cat: transaction.cat || "",
+        acc: transaction.acc,
         note: transaction.note,
       });
     } else {
-      setForm({ desc: "", amount: "", date: new Date().toISOString().split("T")[0], cat: "", acc: "1", note: "" });
+      setForm({
+        desc: "", amount: "",
+        date: new Date().toISOString().split("T")[0],
+        cat: "",
+        acc: accounts[0]?.id || "",
+        note: "",
+      });
     }
-  }, [transaction, open]);
+  }, [transaction, open, accounts]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data = {
       desc: form.desc,
       amount: parseFloat(form.amount),
       date: form.date,
-      cat: form.cat ? parseInt(form.cat) : null,
-      acc: parseInt(form.acc),
+      cat: form.cat || null,
+      acc: form.acc,
       note: form.note,
     };
     if (transaction) {
-      updateTransaction({ ...data, id: transaction.id });
+      await updateTransaction({ ...data, id: transaction.id });
     } else {
-      addTransaction(data);
+      await addTransaction(data);
     }
     onOpenChange(false);
   };
@@ -100,18 +100,12 @@ export function TransactionDialog({ open, onOpenChange, transaction }: Props) {
                 {mainCategories.map(main => {
                   const subs = subCategoriesByParent[main.id] || [];
                   if (!subs.length) {
-                    return (
-                      <option key={main.id} value={main.id}>
-                        {main.name}
-                      </option>
-                    );
+                    return <option key={main.id} value={main.id}>{main.name}</option>;
                   }
                   return (
                     <optgroup key={main.id} label={main.name}>
                       {subs.map(sub => (
-                        <option key={sub.id} value={sub.id}>
-                          {`${main.name} · ${sub.name}`}
-                        </option>
+                        <option key={sub.id} value={sub.id}>{`${main.name} · ${sub.name}`}</option>
                       ))}
                     </optgroup>
                   );

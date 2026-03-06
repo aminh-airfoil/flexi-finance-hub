@@ -24,27 +24,28 @@ export default function AccountsPage() {
         <div className="text-xs text-muted-foreground">Net worth overview</div>
       </div>
 
-      {/* Net Worth */}
       <div className="px-4 pb-4">
-        <div className="bg-gradient-to-br from-primary-dim to-card border border-primary/20 rounded-2xl p-6 text-center">
+        <div className="bg-gradient-to-br from-primary/10 to-card border border-primary/20 rounded-2xl p-6 text-center">
           <div className="text-xs text-primary font-bold uppercase tracking-widest">Total Net Worth</div>
           <div className="text-4xl font-black text-foreground mt-2 tracking-tight">{fmt(totalNet)}</div>
-          <div className="mt-2 flex justify-center"><StatBadge value={8.4} /></div>
-          <div className="mt-4">
-            <ResponsiveContainer width="100%" height={140}>
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={3} dataKey="value">
-                  {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                </Pie>
-                <Tooltip formatter={(v: number) => [fmt(v)]} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <div className="mt-2 flex justify-center"><StatBadge value={0} /></div>
+          {pieData.length > 0 && (
+            <div className="mt-4">
+              <ResponsiveContainer width="100%" height={140}>
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={3} dataKey="value">
+                    {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip formatter={(v: number) => [fmt(v)]} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Account Cards */}
       <div className={`px-4 ${isMobile ? "space-y-3" : "grid grid-cols-2 gap-3"}`}>
+        {accounts.length === 0 && <div className="text-sm text-muted-foreground p-4">No accounts yet. Add one to get started!</div>}
         {accounts.map(acc => (
           <div key={acc.id} className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3.5 group">
             <div className="w-11 h-11 rounded-[14px] flex-shrink-0 flex items-center justify-center" style={{ background: `${acc.color}22` }}>
@@ -67,7 +68,6 @@ export default function AccountsPage() {
         ))}
       </div>
 
-      {/* Monthly Cash Flow */}
       <div className="px-4 mt-4">
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="text-sm font-bold text-foreground mb-4">Monthly Cash Flow</div>

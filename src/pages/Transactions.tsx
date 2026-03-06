@@ -13,10 +13,7 @@ export default function TransactionsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
 
-  const mainCategories = useMemo(
-    () => categories.filter(c => !c.parentId),
-    [categories],
-  );
+  const mainCategories = useMemo(() => categories.filter(c => !c.parentId), [categories]);
 
   const sorted = useMemo(() => {
     const byId = new Map(categories.map(c => [c.id, c]));
@@ -28,14 +25,13 @@ export default function TransactionsPage() {
 
         let matchMain = true;
         if (mainFilter !== "all") {
-          const selectedId = Number(mainFilter);
           const cat = t.cat != null ? byId.get(t.cat) : undefined;
           if (!cat) {
             matchMain = false;
           } else if (!cat.parentId) {
-            matchMain = cat.id === selectedId;
+            matchMain = cat.id === mainFilter;
           } else {
-            matchMain = cat.parentId === selectedId;
+            matchMain = cat.parentId === mainFilter;
           }
         }
 
@@ -48,10 +44,9 @@ export default function TransactionsPage() {
     <div className="pb-6 animate-fade-in">
       <div className="px-4 pt-5 pb-4">
         <div className="text-2xl font-black text-foreground tracking-tight">Transactions</div>
-        <div className="text-xs text-muted-foreground">March 2025 · {sorted.length} records</div>
+        <div className="text-xs text-muted-foreground">{sorted.length} records</div>
       </div>
 
-      {/* Search */}
       <div className="px-4 pb-3">
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -63,39 +58,27 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {/* Filter pills & main category filter */}
       <div className="px-4 pb-4 flex flex-col gap-2">
         <div className="flex gap-2">
           {["all", "income", "expense"].map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
+            <button key={f} onClick={() => setFilter(f)}
               className={`px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-all ${
                 filter === f ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
+              }`}>
               {f}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <span>Main category:</span>
-          <select
-            value={mainFilter}
-            onChange={e => setMainFilter(e.target.value)}
-            className="ml-auto rounded-full border border-border bg-card px-3 py-1 text-[11px] text-foreground"
-          >
+          <select value={mainFilter} onChange={e => setMainFilter(e.target.value)}
+            className="ml-auto rounded-full border border-border bg-card px-3 py-1 text-[11px] text-foreground">
             <option value="all">All categories</option>
-            {mainCategories.map(c => (
-              <option key={c.id} value={String(c.id)}>
-                {c.name}
-              </option>
-            ))}
+            {mainCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
       </div>
 
-      {/* List */}
       <div className="px-4">
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
           {sorted.map(tx => (
@@ -110,7 +93,6 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {/* FAB */}
       <button onClick={() => { setEditing(null); setDialogOpen(true); }}
         className="fixed bottom-24 right-5 lg:bottom-8 lg:right-8 w-13 h-13 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-105 transition-transform z-40">
         <Plus size={22} className="text-primary-foreground" />

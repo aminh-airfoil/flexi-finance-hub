@@ -5,18 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useApp } from "@/contexts/AppContext";
 import { Category } from "@/lib/types";
-import { Utensils, ShoppingCart, Car, Zap, Heart, Monitor, Plane, Coffee } from "lucide-react";
-
-const ICON_OPTIONS = [
-  { icon: Utensils, name: "Utensils" },
-  { icon: ShoppingCart, name: "ShoppingCart" },
-  { icon: Car, name: "Car" },
-  { icon: Zap, name: "Zap" },
-  { icon: Heart, name: "Heart" },
-  { icon: Monitor, name: "Monitor" },
-  { icon: Plane, name: "Plane" },
-  { icon: Coffee, name: "Coffee" },
-];
+import { ICON_OPTIONS } from "@/lib/icons";
 
 const COLOR_OPTIONS = ["#F59E0B", "#8B5CF6", "#0EA5E9", "#10B981", "#F43F5E", "#EC4899", "#14B8A6", "#D97706"];
 
@@ -30,40 +19,38 @@ export function CategoryDialog({ open, onOpenChange, category }: Props) {
   const { addCategory, updateCategory, categories } = useApp();
   const [form, setForm] = useState({ name: "", budget: "", iconIdx: 0, colorIdx: 0, parentId: "" });
 
-  const mainCategories = useMemo(
-    () => categories.filter(c => !c.parentId),
-    [categories],
-  );
+  const mainCategories = useMemo(() => categories.filter(c => !c.parentId), [categories]);
 
   useEffect(() => {
     if (category) {
-      const iconIdx = ICON_OPTIONS.findIndex(o => o.icon === category.icon);
+      const iconIdx = ICON_OPTIONS.findIndex(o => o.name === category.iconName);
       const colorIdx = COLOR_OPTIONS.indexOf(category.color);
       setForm({
         name: category.name,
         budget: String(category.budget),
         iconIdx: iconIdx >= 0 ? iconIdx : 0,
         colorIdx: colorIdx >= 0 ? colorIdx : 0,
-        parentId: category.parentId != null ? String(category.parentId) : "",
+        parentId: category.parentId || "",
       });
     } else {
       setForm({ name: "", budget: "", iconIdx: 0, colorIdx: 0, parentId: "" });
     }
   }, [category, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data = {
       name: form.name,
       budget: parseFloat(form.budget),
       icon: ICON_OPTIONS[form.iconIdx].icon,
+      iconName: ICON_OPTIONS[form.iconIdx].name,
       color: COLOR_OPTIONS[form.colorIdx],
-      parentId: form.parentId ? parseInt(form.parentId) : null,
+      parentId: form.parentId || null,
     };
     if (category) {
-      updateCategory({ ...data, id: category.id });
+      await updateCategory({ ...data, id: category.id });
     } else {
-      addCategory(data);
+      await addCategory(data);
     }
     onOpenChange(false);
   };
@@ -89,11 +76,7 @@ export function CategoryDialog({ open, onOpenChange, category }: Props) {
               <option value="">None (main category)</option>
               {mainCategories
                 .filter(c => !category || c.id !== category.id)
-                .map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+                .map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
