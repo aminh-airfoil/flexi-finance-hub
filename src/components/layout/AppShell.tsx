@@ -162,7 +162,7 @@ export default function AppShell() {
               <span className={`text-[10px] font-medium ${active === id ? "text-primary font-bold" : "text-muted-foreground"}`}>{label}</span>
             </button>
           ))}
-        </div>
+        </nav>
       )}
     </div>
   );
