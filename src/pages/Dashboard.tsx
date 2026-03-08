@@ -6,8 +6,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { StatBadge } from "@/components/shared/StatBadge";
 import { TxRow } from "@/components/shared/TxRow";
+import { SEOHead } from "@/components/shared/SEOHead";
 
 export default function DashboardPage() {
+  return (
+    <>
+      <SEOHead title="Dashboard" description="View your financial overview, spending trends, and recent transactions on FinTrack." />
+      <DashboardContent />
+    </>
+  );
+}
+
+function DashboardContent() {
   const { fmt, categories, transactions, getCat } = useApp();
   const { user } = useAuth();
   const isMobile = useIsMobile();

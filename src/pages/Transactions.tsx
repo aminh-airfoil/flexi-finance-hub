@@ -4,8 +4,18 @@ import { useApp } from "@/contexts/AppContext";
 import { TxRow } from "@/components/shared/TxRow";
 import { TransactionDialog } from "@/components/dialogs/TransactionDialog";
 import { Transaction } from "@/lib/types";
+import { SEOHead } from "@/components/shared/SEOHead";
 
 export default function TransactionsPage() {
+  return (
+    <>
+      <SEOHead title="Transactions" description="Browse, search, and manage all your financial transactions in FinTrack." />
+      <TransactionsContent />
+    </>
+  );
+}
+
+function TransactionsContent() {
   const { transactions, deleteTransaction, categories } = useApp();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");

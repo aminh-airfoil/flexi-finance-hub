@@ -47,12 +47,12 @@ export default function AppShell() {
     <div className="flex min-h-screen bg-background">
       {/* Desktop Sidebar */}
       {!isMobile && (
-        <aside className="w-64 border-r border-border bg-sidebar flex flex-col fixed h-full z-50">
+        <aside className="w-64 border-r border-border bg-sidebar flex flex-col fixed h-full z-50" role="complementary" aria-label="Sidebar navigation">
           <div className="p-6 border-b border-border">
             <h1 className="text-xl font-black text-foreground tracking-tight">FinTrack</h1>
             <p className="text-xs text-muted-foreground mt-1">Personal Finance</p>
           </div>
-          <nav className="flex-1 p-3 space-y-1">
+          <nav className="flex-1 p-3 space-y-1" aria-label="Main navigation">
             {TABS.map(({ id, label, Icon }) => (
               <button
                 key={id}
@@ -107,7 +107,7 @@ export default function AppShell() {
       )}
 
       {/* Main Content */}
-      <main className={`flex-1 ${!isMobile ? "ml-64" : ""} ${isMobile ? "pb-20" : ""} ${chatOpen && !isMobile ? "mr-[360px]" : ""} overflow-y-auto min-h-screen transition-all`}>
+      <main className={`flex-1 ${!isMobile ? "ml-64" : ""} ${isMobile ? "pb-20" : ""} ${chatOpen && !isMobile ? "mr-[360px]" : ""} overflow-y-auto min-h-screen transition-all`} role="main">
         {isMobile && (
           <div className="flex items-center justify-between px-4 pt-4">
             <div className="flex items-center gap-2">
@@ -149,7 +149,7 @@ export default function AppShell() {
 
       {/* Mobile Bottom Nav */}
       {isMobile && !chatOpen && (
-        <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border flex px-2 pb-4 pt-2 gap-1 backdrop-blur-xl z-50">
+        <nav className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border flex px-2 pb-4 pt-2 gap-1 backdrop-blur-xl z-50" aria-label="Mobile navigation">
           {TABS.map(({ id, label, Icon }) => (
             <button
               key={id}
@@ -162,7 +162,7 @@ export default function AppShell() {
               <span className={`text-[10px] font-medium ${active === id ? "text-primary font-bold" : "text-muted-foreground"}`}>{label}</span>
             </button>
           ))}
-        </div>
+        </nav>
       )}
     </div>
   );

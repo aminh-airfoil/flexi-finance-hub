@@ -6,8 +6,18 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { StatBadge } from "@/components/shared/StatBadge";
 import { AccountDialog } from "@/components/dialogs/AccountDialog";
 import { Account } from "@/lib/types";
+import { SEOHead } from "@/components/shared/SEOHead";
 
 export default function AccountsPage() {
+  return (
+    <>
+      <SEOHead title="Accounts" description="Manage your bank accounts, view balances, and track account activity in FinTrack." />
+      <AccountsContent />
+    </>
+  );
+}
+
+function AccountsContent() {
   const { accounts, transactions, fmt, deleteAccount } = useApp();
   const isMobile = useIsMobile();
   const [dialogOpen, setDialogOpen] = useState(false);
