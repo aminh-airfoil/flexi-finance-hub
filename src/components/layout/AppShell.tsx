@@ -107,7 +107,7 @@ export default function AppShell() {
       )}
 
       {/* Main Content */}
-      <main className={`flex-1 ${!isMobile ? "ml-64" : ""} ${isMobile ? "pb-20" : ""} ${chatOpen && !isMobile ? "mr-[360px]" : ""} overflow-y-auto min-h-screen transition-all`}>
+      <main className={`flex-1 ${!isMobile ? "ml-64" : ""} ${isMobile ? "pb-20" : ""} ${chatOpen && !isMobile ? "mr-[360px]" : ""} overflow-y-auto min-h-screen transition-all`} role="main">
         {isMobile && (
           <div className="flex items-center justify-between px-4 pt-4">
             <div className="flex items-center gap-2">
