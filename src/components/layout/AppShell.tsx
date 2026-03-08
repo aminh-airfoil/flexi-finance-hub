@@ -52,7 +52,7 @@ export default function AppShell() {
             <h1 className="text-xl font-black text-foreground tracking-tight">FinTrack</h1>
             <p className="text-xs text-muted-foreground mt-1">Personal Finance</p>
           </div>
-          <nav className="flex-1 p-3 space-y-1">
+          <nav className="flex-1 p-3 space-y-1" aria-label="Main navigation">
             {TABS.map(({ id, label, Icon }) => (
               <button
                 key={id}
