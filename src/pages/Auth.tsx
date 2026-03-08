@@ -45,6 +45,8 @@ export default function AuthPage() {
   };
 
   return (
+    <>
+    <SEOHead title={isLogin ? "Sign In" : "Create Account"} description="Sign in or create an account to start tracking your personal finances with FinTrack." />
     <div className="min-h-screen bg-background flex">
       {/* Left branding panel */}
       <div className="hidden lg:flex lg:w-[45%] xl:w-[42%] relative overflow-hidden flex-col justify-between p-10 bg-gradient-to-br from-primary via-primary/90 to-primary/70 rounded-r-[2.5rem]">

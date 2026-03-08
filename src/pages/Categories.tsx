@@ -4,8 +4,18 @@ import { Plus, Edit3, Trash2 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { CategoryDialog } from "@/components/dialogs/CategoryDialog";
 import { Category } from "@/lib/types";
+import { SEOHead } from "@/components/shared/SEOHead";
 
 export default function CategoriesPage() {
+  return (
+    <>
+      <SEOHead title="Categories" description="Create and manage spending categories and budgets in FinTrack." />
+      <CategoriesContent />
+    </>
+  );
+}
+
+function CategoriesContent() {
   const { categories, transactions, fmt, deleteCategory } = useApp();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
