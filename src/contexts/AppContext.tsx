@@ -100,6 +100,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Listen for refresh-data events from chat
+  useEffect(() => {
+    const handler = () => { fetchData(); };
+    window.addEventListener("refresh-data", handler);
+    return () => window.removeEventListener("refresh-data", handler);
+  }, [fetchData]);
+
   // --- Accounts CRUD ---
   const addAccount = async (a: Omit<Account, "id">) => {
     const { error } = await supabase.from("accounts").insert({

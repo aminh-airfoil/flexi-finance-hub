@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, ArrowLeftRight, Wallet, Tag, LogOut } from "lucide-react";
+import { Home, ArrowLeftRight, Wallet, Tag, LogOut, MessageCircle, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CurrencyPicker } from "@/components/shared/CurrencyPicker";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import DashboardPage from "@/pages/Dashboard";
 import TransactionsPage from "@/pages/Transactions";
 import AccountsPage from "@/pages/Accounts";
 import CategoriesPage from "@/pages/Categories";
+import ChatPanel from "@/components/chat/ChatPanel";
 
 const TABS = [
   { id: "dashboard", label: "Home", Icon: Home },
@@ -27,6 +28,7 @@ const pageMap: Record<TabId, React.ReactNode> = {
 
 export default function AppShell() {
   const [active, setActive] = useState<TabId>("dashboard");
+  const [chatOpen, setChatOpen] = useState(false);
   const isMobile = useIsMobile();
   const { user, signOut } = useAuth();
   const { loading } = useApp();
@@ -66,6 +68,20 @@ export default function AppShell() {
               </button>
             ))}
           </nav>
+          {/* AI Chat Button */}
+          <div className="px-3 pb-1">
+            <button
+              onClick={() => setChatOpen(!chatOpen)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all ${
+                chatOpen
+                  ? "bg-primary/15 text-primary"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+            >
+              <MessageCircle size={18} strokeWidth={chatOpen ? 2.5 : 1.8} />
+              AI Assistant
+            </button>
+          </div>
           <div className="p-4 border-t border-border">
             <CurrencyPicker />
           </div>
@@ -91,7 +107,7 @@ export default function AppShell() {
       )}
 
       {/* Main Content */}
-      <main className={`flex-1 ${!isMobile ? "ml-64" : ""} ${isMobile ? "pb-20" : ""} overflow-y-auto min-h-screen`}>
+      <main className={`flex-1 ${!isMobile ? "ml-64" : ""} ${isMobile ? "pb-20" : ""} ${chatOpen && !isMobile ? "mr-[360px]" : ""} overflow-y-auto min-h-screen transition-all`}>
         {isMobile && (
           <div className="flex items-center justify-between px-4 pt-4">
             <div className="flex items-center gap-2">
@@ -102,14 +118,37 @@ export default function AppShell() {
                 <LogOut size={14} />
               </button>
             </div>
-            <CurrencyPicker />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setChatOpen(!chatOpen)}
+                className={`p-2 rounded-lg transition-colors ${chatOpen ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <MessageCircle size={18} />
+              </button>
+              <CurrencyPicker />
+            </div>
           </div>
         )}
         {pageMap[active]}
       </main>
 
+      {/* Chat Panel */}
+      {chatOpen && (
+        <div className={`fixed top-0 right-0 h-full bg-card border-l border-border z-50 flex flex-col ${
+          isMobile ? "w-full" : "w-[360px]"
+        }`}>
+          <button
+            onClick={() => setChatOpen(false)}
+            className="absolute top-3 right-3 p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground z-10"
+          >
+            <X size={16} />
+          </button>
+          <ChatPanel />
+        </div>
+      )}
+
       {/* Mobile Bottom Nav */}
-      {isMobile && (
+      {isMobile && !chatOpen && (
         <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border flex px-2 pb-4 pt-2 gap-1 backdrop-blur-xl z-50">
           {TABS.map(({ id, label, Icon }) => (
             <button
