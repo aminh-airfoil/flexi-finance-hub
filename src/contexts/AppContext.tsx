@@ -89,13 +89,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     if (txRes.data) {
-      const mapped = txRes.data.map(t => ({
+      setTransactions(txRes.data.map(t => ({
         id: t.id, date: t.date, desc: t.description, cat: t.category_id,
         amount: Number(t.amount), acc: t.account_id, note: t.note,
-      }));
-      // Always sort by date descending
-      mapped.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setTransactions(mapped);
+      })));
     }
 
     setLoading(false);

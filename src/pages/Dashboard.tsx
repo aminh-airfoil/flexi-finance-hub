@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, TrendingDown, ArrowLeftRight, Bell } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -71,30 +71,6 @@ export default function DashboardPage() {
     return data;
   }, [transactions, currYear, currMonthNum]);
 
-  // Weekly cash flow data (Mon-Sun) for current month
-  const weeklyCashFlow = useMemo(() => {
-    if (!transactions.length || !currYear || !currMonthNum) return [];
-
-    const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const data = dayNames.map(day => ({ day, income: 0, expense: 0 }));
-
-    transactions.forEach(t => {
-      const d = new Date(t.date);
-      if (Number.isNaN(d.getTime())) return;
-      if (d.getFullYear() === currYear && d.getMonth() + 1 === currMonthNum) {
-        // getDay() returns 0 for Sunday, we want Mon=0, Sun=6
-        const dayIndex = (d.getDay() + 6) % 7;
-        if (t.amount > 0) {
-          data[dayIndex].income += t.amount;
-        } else {
-          data[dayIndex].expense += Math.abs(t.amount);
-        }
-      }
-    });
-
-    return data;
-  }, [transactions, currYear, currMonthNum]);
-
   const spendByCat = useMemo(() => {
     if (!transactions.length || !currYear || !currMonthNum) return [];
 
@@ -156,18 +132,6 @@ export default function DashboardPage() {
     );
   };
 
-  const CashFlowTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div className="bg-card border border-border rounded-xl p-3 text-xs">
-        <div className="text-muted-foreground mb-1">{label}</div>
-        {payload.map((p: any, i: number) => (
-          <div key={i} style={{ color: p.fill }} className="font-bold capitalize">{p.dataKey}: {fmt(p.value)}</div>
-        ))}
-      </div>
-    );
-  };
-
   return (
     <div className="pb-6 animate-fade-in">
       <div className="px-4 pt-5 pb-4 flex justify-between items-center">
@@ -207,23 +171,27 @@ export default function DashboardPage() {
       </div>
 
       <div className={`px-4 mt-4 ${isMobile ? "space-y-3" : "grid grid-cols-2 gap-4"}`}>
-        {/* Weekly Cash Flow Chart */}
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex justify-between items-center mb-4">
-            <div className="text-sm font-bold text-foreground">Weekly Cash Flow</div>
+            <div className="text-sm font-bold text-foreground">Expense Trend</div>
             <div className="text-[11px] text-muted-foreground bg-subtle px-3 py-1 rounded-full">
-              {weeklyCashFlow.length ? "This month" : "No data yet"}
+              {dailyTrend.length ? "This month" : "No data yet"}
             </div>
           </div>
           <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={weeklyCashFlow} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-              <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} />
-              <Tooltip content={<CashFlowTooltip />} cursor={false} />
-              <Bar dataKey="income" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 4, 4]} />
-              <Bar dataKey="expense" stackId="a" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-            </BarChart>
+            <AreaChart data={dailyTrend} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gradExp" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#0EA5E9" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(216, 30%, 18%)" vertical={false} />
+              <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#64748B" }} tickLine={false} axisLine={false} interval={4} />
+              <YAxis tick={{ fontSize: 10, fill: "#64748B" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#0EA5E9" strokeWidth={2} fill="url(#gradExp)" />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
 
