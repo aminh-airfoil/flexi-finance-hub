@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable/index";
 import { Eye, EyeOff, TrendingUp, Shield, Zap } from "lucide-react";
+import { SEOHead } from "@/components/shared/SEOHead";
 
 export default function AuthPage() {
   const { signIn, signUp } = useAuth();
