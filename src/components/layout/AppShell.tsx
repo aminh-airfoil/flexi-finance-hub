@@ -47,7 +47,7 @@ export default function AppShell() {
     <div className="flex min-h-screen bg-background">
       {/* Desktop Sidebar */}
       {!isMobile && (
-        <aside className="w-64 border-r border-border bg-sidebar flex flex-col fixed h-full z-50">
+        <aside className="w-64 border-r border-border bg-sidebar flex flex-col fixed h-full z-50" role="complementary" aria-label="Sidebar navigation">
           <div className="p-6 border-b border-border">
             <h1 className="text-xl font-black text-foreground tracking-tight">FinTrack</h1>
             <p className="text-xs text-muted-foreground mt-1">Personal Finance</p>
