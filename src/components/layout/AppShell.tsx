@@ -149,7 +149,7 @@ export default function AppShell() {
 
       {/* Mobile Bottom Nav */}
       {isMobile && !chatOpen && (
-        <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border flex px-2 pb-4 pt-2 gap-1 backdrop-blur-xl z-50">
+        <nav className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border flex px-2 pb-4 pt-2 gap-1 backdrop-blur-xl z-50" aria-label="Mobile navigation">
           {TABS.map(({ id, label, Icon }) => (
             <button
               key={id}
