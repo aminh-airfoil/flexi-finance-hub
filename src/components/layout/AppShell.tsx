@@ -26,6 +26,7 @@ const pageMap: Record<TabId, React.ReactNode> = {
   transactions: <TransactionsPage />,
   accounts: <AccountsPage />,
   categories: <CategoriesPage />,
+  reports: <ReportsPage />,
 };
 
 export default function AppShell() {
