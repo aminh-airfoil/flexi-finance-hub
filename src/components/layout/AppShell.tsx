@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, ArrowLeftRight, Wallet, Tag, LogOut, MessageCircle, X } from "lucide-react";
+import { Home, ArrowLeftRight, Wallet, Tag, FileBarChart, LogOut, MessageCircle, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CurrencyPicker } from "@/components/shared/CurrencyPicker";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import DashboardPage from "@/pages/Dashboard";
 import TransactionsPage from "@/pages/Transactions";
 import AccountsPage from "@/pages/Accounts";
 import CategoriesPage from "@/pages/Categories";
+import ReportsPage from "@/pages/Reports";
 import ChatPanel from "@/components/chat/ChatPanel";
 
 const TABS = [
@@ -15,6 +16,7 @@ const TABS = [
   { id: "transactions", label: "Transactions", Icon: ArrowLeftRight },
   { id: "accounts", label: "Accounts", Icon: Wallet },
   { id: "categories", label: "Categories", Icon: Tag },
+  { id: "reports", label: "Reports", Icon: FileBarChart },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -24,6 +26,7 @@ const pageMap: Record<TabId, React.ReactNode> = {
   transactions: <TransactionsPage />,
   accounts: <AccountsPage />,
   categories: <CategoriesPage />,
+  reports: <ReportsPage />,
 };
 
 export default function AppShell() {
