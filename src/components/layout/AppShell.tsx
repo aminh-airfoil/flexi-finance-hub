@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, ArrowLeftRight, Wallet, Tag, LogOut, MessageCircle, X } from "lucide-react";
+import { Home, ArrowLeftRight, Wallet, Tag, FileBarChart, LogOut, MessageCircle, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CurrencyPicker } from "@/components/shared/CurrencyPicker";
 import { useAuth } from "@/contexts/AuthContext";
