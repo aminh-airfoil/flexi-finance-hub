@@ -8,6 +8,7 @@ import DashboardPage from "@/pages/Dashboard";
 import TransactionsPage from "@/pages/Transactions";
 import AccountsPage from "@/pages/Accounts";
 import CategoriesPage from "@/pages/Categories";
+import ReportsPage from "@/pages/Reports";
 import ChatPanel from "@/components/chat/ChatPanel";
 
 const TABS = [
