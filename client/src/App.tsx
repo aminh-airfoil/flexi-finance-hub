@@ -11,7 +11,6 @@ import AuthPage from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
-
 function AppRoutes() {
   const { user, loading } = useAuth();
 
@@ -25,6 +24,7 @@ function AppRoutes() {
 
   if (!user) return <AuthPage />;
 
+  // make sure to consider if you need authentication for certain routes
   return (
     <AppProvider>
       <Routes>
