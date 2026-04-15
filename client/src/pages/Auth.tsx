@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { lovable } from "@/integrations/lovable/index";
+import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff, TrendingUp, Shield, Zap } from "lucide-react";
 import { SEOHead } from "@/components/shared/SEOHead";
 
@@ -35,13 +35,17 @@ export default function AuthPage() {
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
     });
-    if (result?.error) {
+    if (error) {
       toast.error("Google sign-in failed. Please try again.");
+      setGoogleLoading(false);
     }
-    setGoogleLoading(false);
+    // On success, browser redirects to Google — no need to setGoogleLoading(false)
   };
 
   return (
