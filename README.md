@@ -1,73 +1,134 @@
-# Welcome to your Lovable project
-(((FEATURE_BRANCH_2-BOSSS)))
-## Project info
+# Flexi Finance Hub — FinTrack
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+A personal finance tracker built with Vite, React, TypeScript, Tailwind CSS, and Supabase. Track expenses, manage budgets, and monitor your finances with real-time sync and smart analytics.
 
-## How can I edit this code?
+**Live site:** https://flexifinance-vaqglf5x.manus.space
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, TypeScript, Vite |
+| Styling | Tailwind CSS v3, shadcn/ui |
+| Backend / Auth | Supabase (Auth + PostgreSQL) |
+| Charts | Recharts |
+| Date handling | date-fns v3, react-day-picker v8 |
+| Package manager | pnpm |
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## Features
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Email/password and Google OAuth sign-in via Supabase Auth
+- Multi-account management (Checking, Savings, etc.)
+- Transaction tracking with categories and notes
+- Budget management per category
+- Analytics dashboard with spending breakdowns
+- Row-level security — all data is scoped to the authenticated user
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## Project Structure
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+client/          ← React frontend (Vite root)
+  src/
+    pages/       ← Page-level components (Auth, Dashboard, etc.)
+    components/  ← Reusable UI components (shadcn/ui + custom)
+    contexts/    ← React contexts (Auth, etc.)
+    hooks/       ← Custom hooks
+    integrations/
+      supabase/  ← Supabase client + generated types
+server/          ← Express backend (Manus hosting)
+supabase/
+  migrations/    ← Database schema (accounts, categories, transactions)
+shared/          ← Shared types and constants
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Getting Started
 
-**Use GitHub Codespaces**
+### Prerequisites
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- Node.js 18+
+- pnpm (`npm install -g pnpm`)
+- A Supabase project with the schema applied (see below)
 
-## What technologies are used for this project?
+### 1. Clone the repo
 
-This project is built with:
+```sh
+git clone https://github.com/aminh-airfoil/flexi-finance-hub.git
+cd flexi-finance-hub
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### 2. Install dependencies
 
-## How can I deploy this project?
+```sh
+pnpm install
+```
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### 3. Configure environment variables
 
-## Can I connect a custom domain to my Lovable project?
+Create a `.env` file at the project root:
 
-Yes, you can!
+```env
+VITE_SUPABASE_URL=https://<your-project-ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<your-anon-key>
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Both values are found in your Supabase dashboard under **Project Settings → API**.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### 4. Apply the database schema
+
+Run the SQL in `supabase/migrations/` against your Supabase project via the SQL Editor. The schema creates three tables with row-level security policies:
+
+- `accounts` — user bank accounts
+- `categories` — expense categories with budgets
+- `transactions` — individual transactions linked to accounts and categories
+
+### 5. Configure Supabase Auth
+
+In your Supabase dashboard under **Authentication → URL Configuration**:
+
+- **Site URL:** `http://localhost:3000` (or your deployed domain)
+- **Redirect URLs:** `http://localhost:3000/**`
+
+For Google OAuth, enable the Google provider under **Authentication → Providers** and register `https://<your-project-ref>.supabase.co/auth/v1/callback` as an authorized redirect URI in Google Cloud Console.
+
+### 6. Start the development server
+
+```sh
+pnpm dev
+```
+
+The app will be available at `http://localhost:3000`.
+
+---
+
+## Deployment
+
+This project is hosted on [Manus](https://manus.im) at `https://flexifinance-vaqglf5x.manus.space`.
+
+To deploy your own instance, update the Supabase Auth redirect URLs to match your deployment domain.
+
+---
+
+## Database Schema
+
+The full schema is in `supabase/migrations/`. Key design decisions:
+
+- All tables include `user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE` for data isolation
+- Row-level security (RLS) is enabled on all tables — users can only read/write their own data
+- `updated_at` is automatically maintained via a PostgreSQL trigger function
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes and push to your fork
+4. Open a pull request against `main`
