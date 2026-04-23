@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useFinOpsFilters } from "@/hooks/useFinOpsFilters";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Calendar, Download, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
@@ -10,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { parseLocalDate } from "@/lib/utils";
 
-type ReportMode = "monthly" | "yearly";
+
 
 export default function ReportsPage() {
   return (
@@ -24,7 +25,11 @@ export default function ReportsPage() {
 function ReportsContent() {
   const { fmt, transactions, categories, accounts, getCat, getAcc } = useApp();
   const isMobile = useIsMobile();
-  const [mode, setMode] = useState<ReportMode>("monthly");
+  const {
+    selectedMonth, setSelectedMonth,
+    selectedYear, setSelectedYear,
+    selectedView: mode, setSelectedView: setMode,
+  } = useFinOpsFilters();
 
   // Available years from transactions
   const availableYears = useMemo(() => {
@@ -37,10 +42,6 @@ function ReportsContent() {
   }, [transactions]);
 
   const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth(); // 0-11
-
-  const [selectedYear, setSelectedYear] = useState(availableYears[0] ?? currentYear);
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
   const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -177,7 +178,7 @@ function ReportsContent() {
       {/* Controls */}
       <div className="px-4 mb-4">
         <div className={`flex ${isMobile ? "flex-col gap-3" : "items-center gap-3"}`}>
-          <Tabs value={mode} onValueChange={(v) => setMode(v as ReportMode)} className="w-auto">
+          <Tabs value={mode} onValueChange={(v) => setMode(v as "monthly" | "yearly")} className="w-auto">
             <TabsList>
               <TabsTrigger value="monthly">Monthly</TabsTrigger>
               <TabsTrigger value="yearly">Yearly</TabsTrigger>

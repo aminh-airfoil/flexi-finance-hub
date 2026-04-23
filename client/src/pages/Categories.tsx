@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useFinOpsFilters } from "@/hooks/useFinOpsFilters";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
@@ -48,9 +49,10 @@ function CategoriesContent() {
   const { categories, transactions, fmt } = useApp();
 
   // ── period selector ──────────────────────────────────────────────────────
-  const now = new Date();
-  const [selectedYear, setSelectedYear]   = useState(now.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed
+  const {
+    selectedMonth, setSelectedMonth,
+    selectedYear, setSelectedYear,
+  } = useFinOpsFilters();
 
   // ── filter controls ──────────────────────────────────────────────────────
   const [excludeBookkeeping, setExcludeBookkeeping] = useState(true);
