@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useFinOpsFilters } from "@/hooks/useFinOpsFilters";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { PieChartCard } from "@/components/shared/PieChartCard";
 import { ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { SEOHead } from "@/components/shared/SEOHead";
@@ -362,71 +362,14 @@ function CategoriesContent() {
         </div>
       </div>
 
-      {/* Pie chart — full-width card with integrated legend */}
+      {/* Pie chart — reusable PieChartCard */}
       {pieData.length > 0 && (
         <div className="px-4 pb-4">
-          <div className="bg-card border border-border rounded-2xl p-4">
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Breakdown by Category</div>
-            <div className="flex gap-4 items-start">
-              {/* Donut */}
-              <div className="flex-shrink-0" style={{ width: 200, height: 200 }}>
-                <ResponsiveContainer width={200} height={200}>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      dataKey="value"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={58}
-                      outerRadius={90}
-                      paddingAngle={2}
-                      strokeWidth={2}
-                      stroke="hsl(var(--card))"
-                    >
-                      {pieData.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(val: number, _name: string, props: { payload?: { name: string; rawTotal: number } }) => [
-                        fmt(val),
-                        props.payload?.name ?? "",
-                      ]}
-                      contentStyle={{
-                        background: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: 8,
-                        fontSize: 12,
-                        color: "hsl(var(--popover-foreground))",
-                      }}
-                      labelStyle={{ color: "hsl(var(--popover-foreground))" }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Integrated legend — same dataset, same order */}
-              <div className="flex-1 min-w-0 space-y-1.5 overflow-y-auto" style={{ maxHeight: 200 }}>
-                {pieData.map((entry, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    {/* Colored dot — same color as slice */}
-                    <div
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{ background: entry.color }}
-                    />
-                    {/* Name (left) */}
-                    <div className="flex-1 min-w-0 text-xs text-foreground truncate">{entry.name}</div>
-                    {/* Value (right) */}
-                    <div className={`text-xs font-semibold flex-shrink-0 ${
-                      entry.rawTotal < 0 ? "text-rose-400" : "text-emerald-400"
-                    }`}>
-                      {fmt(entry.rawTotal)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <PieChartCard
+            title="Breakdown by Category"
+            data={pieData}
+            fmt={fmt}
+          />
         </div>
       )}
 
