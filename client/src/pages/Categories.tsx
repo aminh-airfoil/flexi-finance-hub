@@ -222,14 +222,37 @@ function CategoriesContent() {
   const totalExpense = periodTxns.filter(t => t.amount < 0).reduce((s, t) => s + t.amount, 0);
   const txnCount = periodTxns.length;
 
-  // ── pie chart data (expense categories only) ─────────────────────────────
-  const pieData = useMemo(
-    () => aggregated
-      .filter(r => r.total < 0)
-      .map(r => ({ name: r.name, value: Math.abs(r.total), color: r.color }))
-      .slice(0, 8),
-    [aggregated],
-  );
+  // ── pie chart palette — 12 visually distinct colors for dark UI ────────────
+  const PIE_PALETTE = [
+    "#60a5fa", // blue-400
+    "#f87171", // red-400
+    "#34d399", // emerald-400
+    "#fbbf24", // amber-400
+    "#a78bfa", // violet-400
+    "#fb923c", // orange-400
+    "#38bdf8", // sky-400
+    "#f472b6", // pink-400
+    "#4ade80", // green-400
+    "#facc15", // yellow-400
+    "#c084fc", // purple-400
+    "#2dd4bf", // teal-400
+  ];
+
+  // ── pie chart data — single source of truth for both slices and legend ──────
+  // Uses ALL main categories (income + expense) sorted by absolute value desc.
+  // Assigns palette color by position so legend color === slice color guaranteed.
+  const pieData = useMemo(() => {
+    const rows = aggregated
+      .filter(r => r.total !== 0)
+      .sort((a, b) => Math.abs(b.total) - Math.abs(a.total))
+      .slice(0, 10); // cap at 10 for readability
+    return rows.map((r, i) => ({
+      name: r.name,
+      value: Math.abs(r.total),
+      rawTotal: r.total,
+      color: PIE_PALETTE[i % PIE_PALETTE.length],
+    }));
+  }, [aggregated]);
 
   // ── expanded rows ─────────────────────────────────────────────────────────
   const [expandedMains, setExpandedMains] = useState<Set<string>>(new Set());
@@ -320,43 +343,92 @@ function CategoriesContent() {
         </button>
       </div>
 
-      {/* Summary cards */}
-      <div className="px-4 pb-4 grid grid-cols-2 gap-3">
-        <div className="bg-card border border-border rounded-2xl p-3">
+      {/* Summary stat chips */}
+      <div className="px-4 pb-3 flex flex-wrap gap-2">
+        <div className="bg-card border border-border rounded-xl px-3 py-2 flex-1 min-w-[120px]">
           <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Income</div>
-          <div className="text-lg font-black text-emerald-400 mt-0.5 tracking-tight">{fmt(totalIncome)}</div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">{periodTxns.filter(t => t.amount > 0).length} txns</div>
+          <div className="text-base font-black text-emerald-400 mt-0.5 tracking-tight">{fmt(totalIncome)}</div>
+          <div className="text-[10px] text-muted-foreground">{periodTxns.filter(t => t.amount > 0).length} txns</div>
         </div>
-        <div className="bg-card border border-border rounded-2xl p-3">
+        <div className="bg-card border border-border rounded-xl px-3 py-2 flex-1 min-w-[120px]">
           <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Expenses</div>
-          <div className="text-lg font-black text-rose-400 mt-0.5 tracking-tight">{fmt(Math.abs(totalExpense))}</div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">{periodTxns.filter(t => t.amount < 0).length} txns</div>
+          <div className="text-base font-black text-rose-400 mt-0.5 tracking-tight">{fmt(Math.abs(totalExpense))}</div>
+          <div className="text-[10px] text-muted-foreground">{periodTxns.filter(t => t.amount < 0).length} txns</div>
         </div>
-        <div className="bg-card border border-border rounded-2xl p-3">
+        <div className="bg-card border border-border rounded-xl px-3 py-2 flex-1 min-w-[120px]">
           <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Net</div>
-          <div className={`text-lg font-black mt-0.5 tracking-tight ${totalAmount >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-            {fmt(totalAmount)}
-          </div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">{txnCount} total txns</div>
-        </div>
-        <div className="bg-card border border-border rounded-2xl p-3 flex items-center justify-center">
-          {pieData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={70}>
-              <PieChart>
-                <Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={20} outerRadius={32} paddingAngle={2}>
-                  {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                </Pie>
-                <Tooltip
-                  formatter={(val: number) => fmt(val)}
-                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="text-[10px] text-muted-foreground">No expense data</div>
-          )}
+          <div className={`text-base font-black mt-0.5 tracking-tight ${totalAmount >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{fmt(totalAmount)}</div>
+          <div className="text-[10px] text-muted-foreground">{txnCount} total txns</div>
         </div>
       </div>
+
+      {/* Pie chart — full-width card with integrated legend */}
+      {pieData.length > 0 && (
+        <div className="px-4 pb-4">
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Breakdown by Category</div>
+            <div className="flex gap-4 items-start">
+              {/* Donut */}
+              <div className="flex-shrink-0" style={{ width: 200, height: 200 }}>
+                <ResponsiveContainer width={200} height={200}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={58}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      strokeWidth={2}
+                      stroke="hsl(var(--card))"
+                    >
+                      {pieData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(val: number, _name: string, props: { payload?: { name: string; rawTotal: number } }) => [
+                        fmt(val),
+                        props.payload?.name ?? "",
+                      ]}
+                      contentStyle={{
+                        background: "hsl(var(--popover))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 8,
+                        fontSize: 12,
+                        color: "hsl(var(--popover-foreground))",
+                      }}
+                      labelStyle={{ color: "hsl(var(--popover-foreground))" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Integrated legend — same dataset, same order */}
+              <div className="flex-1 min-w-0 space-y-1.5 overflow-y-auto" style={{ maxHeight: 200 }}>
+                {pieData.map((entry, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    {/* Colored dot — same color as slice */}
+                    <div
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ background: entry.color }}
+                    />
+                    {/* Name (left) */}
+                    <div className="flex-1 min-w-0 text-xs text-foreground truncate">{entry.name}</div>
+                    {/* Value (right) */}
+                    <div className={`text-xs font-semibold flex-shrink-0 ${
+                      entry.rawTotal < 0 ? "text-rose-400" : "text-emerald-400"
+                    }`}>
+                      {fmt(entry.rawTotal)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Category rows */}
       <div className="px-4 space-y-2">
