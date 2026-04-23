@@ -5,6 +5,7 @@ import { useApp } from "@/contexts/AppContext";
 import { CategoryDialog } from "@/components/dialogs/CategoryDialog";
 import { Category } from "@/lib/types";
 import { SEOHead } from "@/components/shared/SEOHead";
+import { parseLocalDate } from "@/lib/utils";
 
 export default function CategoriesPage() {
   return (
@@ -30,7 +31,7 @@ function CategoriesContent() {
       spent: transactions
         .filter(t => {
           if (t.cat !== cat.id || t.amount < 0 === false) return false;
-          const d = new Date(t.date);
+          const d = parseLocalDate(t.date);
           if (Number.isNaN(d.getTime())) return false;
           return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
         })

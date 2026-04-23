@@ -5,6 +5,7 @@ import { TxRow } from "@/components/shared/TxRow";
 import { TransactionDialog } from "@/components/dialogs/TransactionDialog";
 import { Transaction } from "@/lib/types";
 import { SEOHead } from "@/components/shared/SEOHead";
+import { parseLocalDate } from "@/lib/utils";
 
 export default function TransactionsPage() {
   return (
@@ -47,7 +48,7 @@ function TransactionsContent() {
 
         return matchSearch && matchFilter && matchMain;
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      .sort((a, b) => parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime());
   }, [transactions, search, filter, mainFilter, categories]);
 
   return (

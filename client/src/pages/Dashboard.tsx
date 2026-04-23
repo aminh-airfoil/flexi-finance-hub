@@ -7,6 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { StatBadge } from "@/components/shared/StatBadge";
 import { TxRow } from "@/components/shared/TxRow";
 import { SEOHead } from "@/components/shared/SEOHead";
+import { parseLocalDate } from "@/lib/utils";
 
 export default function DashboardPage() {
   return (
@@ -34,7 +35,7 @@ function DashboardContent() {
     const monthMap = new Map<string, MonthAgg>();
 
     transactions.forEach(t => {
-      const d = new Date(t.date);
+      const d = parseLocalDate(t.date);
       if (Number.isNaN(d.getTime())) return;
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const entry = monthMap.get(key) || { inflow: 0, outflow: 0, transactions: 0 };
@@ -68,7 +69,7 @@ function DashboardContent() {
 
     transactions.forEach(t => {
       if (t.amount >= 0) return;
-      const d = new Date(t.date);
+      const d = parseLocalDate(t.date);
       if (Number.isNaN(d.getTime())) return;
       if (d.getFullYear() === currYear && d.getMonth() + 1 === currMonthNum) {
         const day = d.getDate();
@@ -91,7 +92,7 @@ function DashboardContent() {
       spent: transactions
         .filter(t => {
           if (t.cat !== cat.id || t.amount >= 0) return false;
-          const d = new Date(t.date);
+          const d = parseLocalDate(t.date);
           if (Number.isNaN(d.getTime())) return false;
           return d.getFullYear() === currYear && d.getMonth() === monthIdx;
         })
@@ -112,7 +113,7 @@ function DashboardContent() {
   }, [categories, transactions, currYear, currMonthNum]);
 
   const recentTx = useMemo(() =>
-    [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8),
+    [...transactions].sort((a, b) => parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime()).slice(0, 8),
     [transactions]
   );
 

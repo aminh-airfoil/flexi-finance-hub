@@ -1,6 +1,7 @@
 import { TrendingUp, TrendingDown, Edit3, Trash2 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { Transaction } from "@/lib/types";
+import { parseLocalDate } from "@/lib/utils";
 
 interface TxRowProps {
   tx: Transaction;
@@ -36,7 +37,7 @@ export function TxRow({ tx, compact, onEdit, onDelete }: TxRowProps) {
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-semibold text-foreground truncate">{tx.desc}</div>
         <div className="text-[11px] text-muted-foreground mt-0.5">
-          {categoryLabel} · {new Date(tx.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+          {categoryLabel} · {parseLocalDate(tx.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
         </div>
       </div>
       <div className={`text-sm font-bold flex-shrink-0 ${tx.amount > 0 ? "text-success" : "text-foreground"}`}>

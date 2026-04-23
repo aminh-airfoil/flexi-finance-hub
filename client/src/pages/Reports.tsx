@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { parseLocalDate } from "@/lib/utils";
 
 type ReportMode = "monthly" | "yearly";
 
@@ -29,7 +30,7 @@ function ReportsContent() {
   const availableYears = useMemo(() => {
     const years = new Set<number>();
     transactions.forEach(t => {
-      const d = new Date(t.date);
+      const d = parseLocalDate(t.date);
       if (!isNaN(d.getTime())) years.add(d.getFullYear());
     });
     return Array.from(years).sort((a, b) => b - a);
@@ -46,7 +47,7 @@ function ReportsContent() {
   // Filter transactions for selected period
   const filtered = useMemo(() => {
     return transactions.filter(t => {
-      const d = new Date(t.date);
+      const d = parseLocalDate(t.date);
       if (isNaN(d.getTime())) return false;
       if (d.getFullYear() !== selectedYear) return false;
       if (mode === "monthly" && d.getMonth() !== selectedMonth) return false;
@@ -101,7 +102,7 @@ function ReportsContent() {
     return MONTHS.map((name, i) => {
       let inflow = 0, outflow = 0;
       transactions.forEach(t => {
-        const d = new Date(t.date);
+        const d = parseLocalDate(t.date);
         if (isNaN(d.getTime()) || d.getFullYear() !== selectedYear || d.getMonth() !== i) return;
         if (t.amount > 0) inflow += t.amount;
         else outflow += Math.abs(t.amount);
@@ -120,7 +121,7 @@ function ReportsContent() {
       outflow: 0,
     }));
     filtered.forEach(t => {
-      const d = new Date(t.date);
+      const d = parseLocalDate(t.date);
       const day = d.getDate();
       if (day >= 1 && day <= daysInMonth) {
         if (t.amount > 0) data[day - 1].inflow += t.amount;

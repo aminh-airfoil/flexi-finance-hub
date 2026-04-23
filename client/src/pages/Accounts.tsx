@@ -7,6 +7,7 @@ import { StatBadge } from "@/components/shared/StatBadge";
 import { AccountDialog } from "@/components/dialogs/AccountDialog";
 import { Account } from "@/lib/types";
 import { SEOHead } from "@/components/shared/SEOHead";
+import { parseLocalDate } from "@/lib/utils";
 
 export default function AccountsPage() {
   return (
@@ -55,7 +56,7 @@ function AccountsContent() {
     const monthMap = new Map<string, FlowAgg>();
 
     transactions.forEach(t => {
-      const d = new Date(t.date);
+      const d = parseLocalDate(t.date);
       if (Number.isNaN(d.getTime())) return;
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const monthLabel = new Date(d.getFullYear(), d.getMonth(), 1).toLocaleString("en-US", { month: "short" });
