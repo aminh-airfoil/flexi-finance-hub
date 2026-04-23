@@ -87,28 +87,32 @@ function DashboardContent() {
 
     const monthIdx = currMonthNum - 1; // currMonthNum is 1-12
 
-    const withSpend = categories.map(cat => ({
-      ...cat,
-      spent: transactions
-        .filter(t => {
-          if (t.cat !== cat.id || t.amount >= 0) return false;
-          const d = parseLocalDate(t.date);
-          if (Number.isNaN(d.getTime())) return false;
-          return d.getFullYear() === currYear && d.getMonth() === monthIdx;
-        })
-        .reduce((s, t) => s + Math.abs(t.amount), 0),
-    }));
+    // Build a map from any category id → its main category id.
+    // Transactions point to sub/detail categories (not main), so we need to
+    // walk up the hierarchy to attribute each transaction to its main category.
+    const catById = new Map(categories.map(c => [c.id, c]));
+    const toMainId = (catId: string | null | undefined): string | null => {
+      if (!catId) return null;
+      let c = catById.get(catId);
+      while (c?.parentId) c = catById.get(c.parentId);
+      return c?.id ?? null;
+    };
 
-    const mainCategories = withSpend
-      .filter(c => !c.parentId)
-      .map(main => {
-        const subs = withSpend.filter(c => c.parentId === main.id);
-        const subTotal = subs.reduce((s, sub) => s + sub.spent, 0);
-        return { ...main, spentWithSubs: main.spent + subTotal };
-      });
+    // Aggregate expense amounts per main category for the current month
+    const spendMap = new Map<string, number>();
+    transactions.forEach(t => {
+      if (t.amount >= 0) return; // expenses only
+      const d = parseLocalDate(t.date);
+      if (Number.isNaN(d.getTime())) return;
+      if (d.getFullYear() !== currYear || d.getMonth() !== monthIdx) return;
+      const mainId = toMainId(t.cat);
+      if (!mainId) return;
+      spendMap.set(mainId, (spendMap.get(mainId) ?? 0) + Math.abs(t.amount));
+    });
 
-    return mainCategories
-      .filter(c => c.spentWithSubs > 0)
+    return categories
+      .filter(c => !c.parentId && (spendMap.get(c.id) ?? 0) > 0)
+      .map(c => ({ ...c, spentWithSubs: spendMap.get(c.id) ?? 0 }))
       .sort((a, b) => b.spentWithSubs - a.spentWithSubs);
   }, [categories, transactions, currYear, currMonthNum]);
 
