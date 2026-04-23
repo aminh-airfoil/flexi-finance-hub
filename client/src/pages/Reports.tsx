@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { parseLocalDate } from "@/lib/utils";
+import { PieChartCard, type PieSlice } from "@/components/shared/PieChartCard";
 
 
 
@@ -66,20 +67,42 @@ function ReportsContent() {
     return { inflow, outflow, net: inflow - outflow, count: filtered.length };
   }, [filtered]);
 
-  // Category breakdown
+  // Walk up the category hierarchy to find the root main category
+  const toMainCat = (catId: string | undefined): ReturnType<typeof getCat> => {
+    if (!catId) return undefined;
+    let cat = getCat(catId);
+    while (cat && cat.parentId) {
+      const parent = getCat(cat.parentId);
+      if (!parent) break;
+      cat = parent;
+    }
+    return cat;
+  };
+
+  // Category breakdown — grouped by MAIN category (hierarchy traversal)
   const categoryBreakdown = useMemo(() => {
-    const map = new Map<string, number>();
+    const PALETTE = [
+      "#3B82F6","#EF4444","#10B981","#F59E0B","#8B5CF6",
+      "#EC4899","#06B6D4","#84CC16","#F97316","#6366F1",
+      "#14B8A6","#E11D48",
+    ];
+    const map = new Map<string, { name: string; amount: number }>();
     filtered.forEach(t => {
       if (t.amount >= 0) return;
-      const catId = t.cat || "uncategorized";
-      map.set(catId, (map.get(catId) || 0) + Math.abs(t.amount));
+      const main = toMainCat(t.cat ?? undefined);
+      const key = main?.id || "uncategorized";
+      const name = main?.name || "Uncategorized";
+      const prev = map.get(key) || { name, amount: 0 };
+      map.set(key, { name, amount: prev.amount + Math.abs(t.amount) });
     });
     return Array.from(map.entries())
-      .map(([id, amount]) => {
-        const cat = getCat(id);
-        return { id, name: cat?.name || "Uncategorized", color: cat?.color || "#64748B", amount };
-      })
-      .sort((a, b) => b.amount - a.amount);
+      .map(([, { name, amount }], i): PieSlice => ({
+        name,
+        value: amount,
+        rawTotal: -amount,   // negative = expense
+        color: PALETTE[i % PALETTE.length],
+      }))
+      .sort((a, b) => b.value - a.value);
   }, [filtered, getCat]);
 
   // Account breakdown
@@ -288,48 +311,11 @@ function ReportsContent() {
         </Card>
 
         {/* Pie Chart - Category Breakdown */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold">Expenses by Category</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {categoryBreakdown.length === 0 ? (
-              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">No expense data</div>
-            ) : (
-              <div className="flex items-center gap-4">
-                <ResponsiveContainer width="50%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={categoryBreakdown}
-                      dataKey="amount"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={70}
-                      strokeWidth={2}
-                      stroke="hsl(220, 40%, 10%)"
-                    >
-                      {categoryBreakdown.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: number) => fmt(value)} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex-1 space-y-2 overflow-y-auto max-h-[220px]">
-                  {categoryBreakdown.map(cat => (
-                    <div key={cat.id} className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: cat.color }} />
-                      <span className="text-xs text-foreground truncate flex-1">{cat.name}</span>
-                      <span className="text-xs font-bold text-muted-foreground">{fmt(cat.amount)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <PieChartCard
+          title="Expenses by Category"
+          data={categoryBreakdown}
+          fmt={fmt}
+        />
       </div>
 
       {/* Account Summary */}
