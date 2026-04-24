@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Wallet, ChevronRight, Plus, Edit3, Trash2 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { StatBadge } from "@/components/shared/StatBadge";
 import { AccountDialog } from "@/components/dialogs/AccountDialog";
@@ -20,6 +21,7 @@ export default function AccountsPage() {
 
 function AccountsContent() {
   const { accounts, transactions, fmt, deleteAccount } = useApp();
+  const { canWrite, canDelete } = useAuth();
   const isMobile = useIsMobile();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
@@ -113,10 +115,12 @@ function AccountsContent() {
               <div className={`text-base font-black ${acc.computedBalance < 0 ? "text-destructive" : "text-foreground"}`}>{fmt(acc.computedBalance)}</div>
               <div className="text-[10px] text-muted-foreground mt-0.5">Available</div>
             </div>
-            <div className="hidden group-hover:flex items-center gap-1">
-              <button onClick={() => { setEditing(acc); setDialogOpen(true); }} className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground"><Edit3 size={13} /></button>
-              <button onClick={() => deleteAccount(acc.id)} className="p-1.5 rounded-md hover:bg-destructive-dim text-muted-foreground hover:text-destructive"><Trash2 size={13} /></button>
-            </div>
+            {(canWrite || canDelete) && (
+              <div className="hidden group-hover:flex items-center gap-1">
+                {canWrite && <button onClick={() => { setEditing(acc); setDialogOpen(true); }} className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground"><Edit3 size={13} /></button>}
+                {canDelete && <button onClick={() => deleteAccount(acc.id)} className="p-1.5 rounded-md hover:bg-destructive-dim text-muted-foreground hover:text-destructive"><Trash2 size={13} /></button>}
+              </div>
+            )}
             <ChevronRight size={14} className="text-muted-foreground" />
           </div>
         ))}
@@ -138,10 +142,12 @@ function AccountsContent() {
         </div>
       </div>
 
-      <button onClick={() => { setEditing(null); setDialogOpen(true); }}
-        className="fixed bottom-24 right-5 lg:bottom-8 lg:right-8 w-13 h-13 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-105 transition-transform z-40">
-        <Plus size={22} className="text-primary-foreground" />
-      </button>
+      {canWrite && (
+        <button onClick={() => { setEditing(null); setDialogOpen(true); }}
+          className="fixed bottom-24 right-5 lg:bottom-8 lg:right-8 w-13 h-13 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-105 transition-transform z-40">
+          <Plus size={22} className="text-primary-foreground" />
+        </button>
+      )}
 
       <AccountDialog open={dialogOpen} onOpenChange={setDialogOpen} account={editing} />
     </div>

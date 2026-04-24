@@ -25,4 +25,20 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/**
+ * Profiles table — maps Supabase auth.users to FinOps roles.
+ * id matches auth.users.id (UUID from Supabase Auth).
+ * This is the source of truth for RBAC role checks.
+ */
+export const profiles = mysqlTable("profiles", {
+  /** UUID matching auth.users.id from Supabase Auth */
+  id: varchar("id", { length: 36 }).primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  name: text("name"),
+  role: mysqlEnum("role", ["owner", "admin", "member"]).default("member").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Profile = typeof profiles.$inferSelect;
+export type InsertProfile = typeof profiles.$inferInsert;

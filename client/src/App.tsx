@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppProvider } from "@/contexts/AppContext";
 import Index from "./pages/Index";
 import AuthPage from "./pages/Auth";
+import ResetPasswordPage from "./pages/ResetPassword";
+import AccountSettingsPage from "./pages/AccountSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,13 +24,23 @@ function AppRoutes() {
     );
   }
 
-  if (!user) return <AuthPage />;
+  // Allow password reset page without auth (handles Supabase recovery token)
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="*" element={<AuthPage />} />
+      </Routes>
+    );
+  }
 
   // make sure to consider if you need authentication for certain routes
   return (
     <AppProvider>
       <Routes>
         <Route path="/" element={<Index />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/account-settings" element={<AccountSettingsPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppProvider>

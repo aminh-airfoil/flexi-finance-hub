@@ -8,6 +8,13 @@
       "when": 1776227185948,
       "tag": "0000_demonic_cargill",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1776994728511,
+      "tag": "0001_kind_strong_guy",
+      "breakpoints": true
     }
   ]
 }

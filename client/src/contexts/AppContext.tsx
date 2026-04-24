@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { Currency, Category, Account, Transaction } from "@/lib/types";
 import { getIconByName } from "@/lib/icons";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +50,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Track whether we've done at least one successful load
+  const hasLoadedRef = useRef(false);
+  // Track the user ID we last loaded data for
+  const loadedForUserRef = useRef<string | null>(null);
+
   const convert = useCallback((n: number) => n, []);
   const fmt = useCallback((n: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -65,9 +70,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const getSubCategories = useCallback((parentId: string) => categories.filter(c => c.parentId === parentId), [categories]);
 
   // --- Fetch all data ---
-  const fetchData = useCallback(async () => {
+  // silent=true: background refresh — don't show loading gate, keep existing data visible
+  const fetchData = useCallback(async (silent = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
 
     const [accRes, catRes, txRes] = await Promise.all([
       supabase.from("accounts").select("*").order("created_at"),
@@ -95,14 +101,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })));
     }
 
+    hasLoadedRef.current = true;
+    loadedForUserRef.current = user.id;
     setLoading(false);
   }, [user]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  // Listen for refresh-data events from chat
+  // Initial load: only fetch when user is available and we haven't loaded for this user yet
   useEffect(() => {
-    const handler = () => { fetchData(); };
+    if (!user) return;
+    // If we already have data for this user, skip — prevents refetch on auth token refresh
+    if (hasLoadedRef.current && loadedForUserRef.current === user.id) return;
+    fetchData(false);
+  }, [user, fetchData]);
+
+  // Listen for explicit refresh-data events (e.g. from AI chat)
+  useEffect(() => {
+    const handler = () => { fetchData(true); }; // silent background refresh
     window.addEventListener("refresh-data", handler);
     return () => window.removeEventListener("refresh-data", handler);
   }, [fetchData]);
@@ -113,7 +127,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       user_id: user!.id, name: a.name, bank: a.bank, balance: a.balance, color: a.color, type: a.type,
     });
     if (error) { toast.error(error.message); return; }
-    await fetchData();
+    await fetchData(true);
   };
 
   const updateAccount = async (a: Account) => {
@@ -121,13 +135,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       name: a.name, bank: a.bank, balance: a.balance, color: a.color, type: a.type,
     }).eq("id", a.id);
     if (error) { toast.error(error.message); return; }
-    await fetchData();
+    await fetchData(true);
   };
 
   const deleteAccount = async (id: string) => {
     const { error } = await supabase.from("accounts").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
-    await fetchData();
+    await fetchData(true);
   };
 
   // --- Categories CRUD ---
@@ -137,7 +151,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       parent_id: c.parentId || null,
     } as any);
     if (error) { toast.error(error.message); return; }
-    await fetchData();
+    await fetchData(true);
   };
 
   const updateCategory = async (c: Category) => {
@@ -146,13 +160,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       parent_id: c.parentId || null,
     } as any).eq("id", c.id);
     if (error) { toast.error(error.message); return; }
-    await fetchData();
+    await fetchData(true);
   };
 
   const deleteCategory = async (id: string) => {
     const { error } = await supabase.from("categories").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
-    await fetchData();
+    await fetchData(true);
   };
 
   // --- Transactions CRUD ---
@@ -162,7 +176,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       category_id: t.cat || null, account_id: t.acc, note: t.note,
     });
     if (error) { toast.error(error.message); return; }
-    await fetchData();
+    await fetchData(true);
   };
 
   const updateTransaction = async (t: Transaction) => {
@@ -171,13 +185,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       category_id: t.cat || null, account_id: t.acc, note: t.note,
     }).eq("id", t.id);
     if (error) { toast.error(error.message); return; }
-    await fetchData();
+    await fetchData(true);
   };
 
   const deleteTransaction = async (id: string) => {
     const { error } = await supabase.from("transactions").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
-    await fetchData();
+    await fetchData(true);
   };
 
   return (

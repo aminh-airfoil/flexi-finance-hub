@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Search, Plus } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { TxRow } from "@/components/shared/TxRow";
 import { TransactionDialog } from "@/components/dialogs/TransactionDialog";
 import { Transaction } from "@/lib/types";
@@ -18,6 +19,7 @@ export default function TransactionsPage() {
 
 function TransactionsContent() {
   const { transactions, deleteTransaction, categories } = useApp();
+  const { canWrite, canDelete } = useAuth();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [mainFilter, setMainFilter] = useState<string>("all");
@@ -94,8 +96,8 @@ function TransactionsContent() {
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
           {sorted.map(tx => (
             <TxRow key={tx.id} tx={tx}
-              onEdit={(t) => { setEditing(t); setDialogOpen(true); }}
-              onDelete={deleteTransaction}
+              onEdit={canWrite ? (t) => { setEditing(t); setDialogOpen(true); } : undefined}
+              onDelete={canDelete ? deleteTransaction : undefined}
             />
           ))}
           {sorted.length === 0 && (
@@ -104,10 +106,12 @@ function TransactionsContent() {
         </div>
       </div>
 
-      <button onClick={() => { setEditing(null); setDialogOpen(true); }}
-        className="fixed bottom-24 right-5 lg:bottom-8 lg:right-8 w-13 h-13 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-105 transition-transform z-40">
-        <Plus size={22} className="text-primary-foreground" />
-      </button>
+      {canWrite && (
+        <button onClick={() => { setEditing(null); setDialogOpen(true); }}
+          className="fixed bottom-24 right-5 lg:bottom-8 lg:right-8 w-13 h-13 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-105 transition-transform z-40">
+          <Plus size={22} className="text-primary-foreground" />
+        </button>
+      )}
 
       <TransactionDialog open={dialogOpen} onOpenChange={setDialogOpen} transaction={editing} />
     </div>
